@@ -1,5 +1,5 @@
 site_name: Vaccine Cold Chain Monitoring
-repo_url: https://github.com/ibm-cloud-architecture/vaccine-cold-chain.git
+repo_url: https://github.ibm.com/vaccine-cold-chain/vaccine-cold-chain-main.git
 nav:
   - Problem Statement: index.md
   - Solution Design: 
