@@ -1,0 +1,1 @@
+# Refrigerator container manager microservice

@@ -1,0 +1,37 @@
+site_name: Vaccine Cold Chain Monitoring
+repo_url: https://github.com/ibm-cloud-architecture/vaccine-cold-chain.git
+nav:
+  - Problem Statement: index.md
+  - Solution Design: 
+    - Event storming: design/evt-storming.md
+    - Domain Driven Design: design/ddd.md
+    - System Context: design/syst-ctx.md
+    - Component View: design/comp-view.md
+    - Cloud Pak for App Solution Builder: design/cp4a-sol-builder.md
+  - Solution Anatomy:
+      - Vaccine manager microservice: infuse/vaccine-mgr.md
+      - Container manager microservice: infuse/container-mgr.md
+      - Cold Chain monitoring agent app with cloud pak for application: infuse/dev-scoring.md
+      - Engineer dispatching with Business process with Cloud Pak for Automation: bpm/readme.md
+      - IoT Simulator: infuse/simul-app.md
+      - Collect data with Cloud Pak for Data: collect/cp4d-collect-data.md
+      - Define the anomaly detection scoring model with Watson Studio: analyze/ws-ml-dev.md
+  - Devops: 
+    - Build and run the solution on Openshift: infuse/build-run.md
+    - Continuous Integration: devops/ci.md
+    - Continuous Deployment: devops/cd.md
+  - Multi-cloud management:
+    - Problem statement: mcm/problem.md
+    - Deploy dependant products: mcm/deploy-products.md
+    - Deploy solution: mcm/deploy-solution.md
+  - Compendium: compendium.md
+
+theme: 
+  name: material
+extra_css: ["extra.css"]
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
