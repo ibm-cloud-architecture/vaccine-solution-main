@@ -23,6 +23,9 @@ System_Boundary(vms,"Vaccine_Monitoring_Solution") {
     Container(maintenance_process,"Maintenance Process","BPM","Business process to track reefer container maintenance")
     Container(watson_ml,"Anomaly detection scoring","Watson ML","Anomaly detection scoring")
     Container(vaccine_mgr,"Vaccine Mgr","Java,Quarkus","Microservice managing Vaccine entities")
+    Container(openscale,"Watson OpenScale","Watson OpenScale","Model drift monitoring")
+    Container(dashboard,"Dashboard","Watson Dashboard","Bias monitoring")
+
 }
 Rel(ManufacturerQA,app,"Triggers QA validation","HTTPS")
 Rel(ManufacturerMgr,app,"Mamages vaccine process","HTTPS")
@@ -41,5 +44,7 @@ Rel(cold_chain_monitoring,watson_ml,"Delegates","HTTPS")
 
 Rel(reefers_mgr,maintenance_process,"Triggers","HTTPS")
 Rel(reefer, message_bus,"Sends telemetries","HTTPS,Kafka")
+Rel(openscale,watson_ml,"Monitors drift","HTTPS")
+Rel(dashboard,openscale,"Monitors drift","HTTPS")
 
 @enduml

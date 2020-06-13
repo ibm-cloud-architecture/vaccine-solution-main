@@ -122,7 +122,7 @@ class SimulationController(Resource):
 api.add_resource(SimulationController, "/control")
 ```
 
-The [Pipfile]() defines the dependencies for this component, and is used by `pipenv` during the automatic build process within `appsody build`.
+The [Pipfile](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator/blob/master/Pipfile) defines the dependencies for this component, and is used by `pipenv` during the automatic build process within `appsody build`.
 
 To launch the web application in development mode, using an IBM Event Streams instance, use the following commands:
 
@@ -137,22 +137,22 @@ appsody run --docker-options="-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$K
 
 The trace shows the Kafka configuration options:
 
-```
+```shell
 Kafka options are:
-[Container] {'bootstrap.servers': 'eventstream140-ibm-es-proxy-route-broker-0-eventstreams.apps.green.ocp.csplab.local:443', 'group.id': 'ReeferTelemetryProducers', 'security.protocol': 'SASL_SSL', 'sasl.mechanisms': 'PLAIN', 'sasl.username': 'token', 'sasl.password': 'xCByo4478xQH...EVdcbGNCtLLuItKgVDc', 'ssl.ca.location': '/project/userapp/certs/ocp/es-cert.pem'}
+[Container] {'bootstrap.servers': 'eventstream140-ibm-es-proxy-route-broker-0-eventstreams.apps.green.ocp.csplab.local:443', 'group.id': 'ReeferTelemetryProducers', 'security.protocol': 'SASL_SSL', 'sasl.mechanisms': 'PLAIN', 'sasl.username': 'token', 'sasl.password': 'xCByo4478xQH...EVdcbGNCtLLuItKgVDc', 'ssl.ca.location': '/project/userapp/certs/es-cert.pem'}
 ```
 
 ## Testing
 
 ### Unit test the Simulator
 
-The test coverage is not yet great. To run the test use `appsody test`.
+The test coverage is not great yet. To run the test use `appsody test`.
 
 ```
-cd simulator
+cd reeferiotsimulator
 ./startPythonEnv
-root@1de81b16f940:/# export PYTHONPATH=/home/simulator
-root@1de81b16f940:/# cd /home/simulator
+root@1de81b16f940:/# export PYTHONPATH=/home/reeferiotsimulator
+root@1de81b16f940:/# cd /home/reeferiotsimulator
 root@1de81b16f940:/# python tests/unit/TestSimulator.py
 ```
 
@@ -163,15 +163,28 @@ Use the web browser or a Postman to go to the URL: [http://localhost:8080/contro
 ![](images/simulapp-control-openapi.png)
 
 
-## Prepare for kubernetes deployment
+## Kubernetes deployment
 
 1. There are three required configuration elements for connectivity to IBM Event Streams (Kafka) prior to deploy:
 
   * A `ConfigMap` named `kafka-brokers` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-kafka-brokers_1)**
   * A `Secret` named `eventstreams-api-key` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-api-key_1)**
-  * A `Secret` named `eventstreams-cert-pem` _(if connecting to an on-premise version of IBM Event Streams)_ **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-certificates)**
 
-1. Once those elements are defined it is important to configure the app so it can retrieve those information via environment variables. With Appsody the file `appsody-config.yaml` is supporting these configurations. See the [lines 24 to 40](https://github.com/ibm-cloud-architecture/refarch-reefer-ml/blob/master/simulator/app-deploy.yaml#L24-L40) to get the settings to map environment variables to Config Maps or Secrets.
+
+1. Once those elements are defined it is important to configure the app so it can retrieve those information via environment variables. With Appsody the file `appsody-config.yaml` is supporting these configurations. 
+
+```
+  - name: KAFKA_BROKERS
+    valueFrom:
+      configMapKeyRef:
+        key: brokers
+        name: kafka-brokers
+  - name: KAFKA_APIKEY
+    valueFrom:
+      secretKeyRef:
+        key: binding
+        name: eventstreams-apikey
+```
 
 When using TLS connection, the TLS certificate is mounted inside the container via mounted file system. Inside the container the directory will be `/certs` and the volume is in fact a Secret containing the pem certificate as string.
 
@@ -186,15 +199,14 @@ volumeMounts:
       secretName: eventstreams-cert-pem
 ```
 
-## Build
+### Build
 
 The Docker image can be built from this directory by using the `appsody build` command:
 
 1. Ensure you are logged in to the desired remote Docker registry through your local Docker client.
-2. The `appsody build -t ibmcase/kcontainer-reefer-simulator:appsody-v1 --push` command will build and push the application's Docker image to the specified remote image registry (here this is the public docker hub repository).
+2. The `appsody build -t ibmcase/vcc-reeferiotsimulator:v1.0.0 --push` command will build and push the application's Docker image to the specified remote image registry (here this is the public docker hub repository).
 
-
-## Application deployment
+### Application deployment
 
 The application can be deployed to a remote OpenShift cluster by using the `appsody deploy` command (We recommend reading [Appsody build and deploy product documentation](https://appsody.dev/docs/using-appsody/building-and-deploying/)):
 
@@ -202,9 +214,9 @@ The application can be deployed to a remote OpenShift cluster by using the `apps
 
 ```shell
 # login to the openshift cluster if not done already
-oc login --token=rR.... --server=https://api.green.ocp.csplab.local:6443
+oc login --token=rR.... --server=....
 # Deploy to the eda-sandbox project
-appsody deploy -t ibmcase/kcontainer-reefer-simulator:appsody-v1 --namespace eda-sandbox --no-build
+appsody deploy -t ibmcase/vcc-reeferiotsimulator:v1.00 --push --namespace --no-build vaccine-cold-chain
 ```
 
 You can verify the deployment with the CLI
@@ -216,25 +228,20 @@ or the via the Openshift console:
 
 ![](images/simul-app-ocp.png)
 
-* To make the webapp visible externally to the cluster, you need to add a `route` for this deployment. Login to the admin console and use `Create Route` button on top right of the screen,
+Appsody has defined the service and expose the application via a route.
 
-![](images/create-routes.png)
+```
+oc get svc
+oc describe route vaccine-reefer-simulator
+```
 
-Then enter a name and select the existing service
-
-![](images/simul-route-create.png)
-
-Once created, the URL of the app is visible in the route list panel:
-
-![](images/simul-route.png)
-
-Add the host name in your local /etc/hosts or be sure the hostname is defined in DNS server. Map to the IP address of the kubernetes proxy server end point.
+* To delete the deployment: `appsody deploy delete`
 
 ### Continuous deployment with Tekton
 
 The general approach to use Tekton to deploy the components of the solution is defined in [this note](../devops/cd.md#tekton-appsody-deployments).
 
-## Usage
+## Demonstrate
 
 Once deployed, you can access the Swagger-based REST API via the defined route and trigger the simulation controls.
 

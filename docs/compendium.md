@@ -9,6 +9,7 @@
 
 * [IBM Cloud Pak for Applications](https://www.ibm.com/cloud/cloud-pak-for-applications)
 * [Kabanero architecture and workflows](https://kabanero.io/docs/ref/general/overview/architecture-overview.html)
+* [Appsody deploying documentation](https://appsody.dev/docs/using-appsody/deploying)
 
 ## Cloud Pak for Data
 
