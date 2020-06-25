@@ -1,0 +1,35 @@
+- title: Solution Design
+  pages:
+    - title: Design Thinking and Event Storming
+      path: /design/dtw/
+    - title: Domain Driven Design
+      path: /design/ddd/
+    - title: System Context
+      path: /design/syst-ctx/
+    - title: Component View
+      path: /design/comp-view/
+    - title: Solution Builder (CP4App)
+      path: /design/cp4a-sol-builder/
+- title: Solution Anatomy
+  pages:
+    - title: IoT Simulator
+      path: /solution/reefer-iot/
+    - title: Engineer dispatching for reefer maintenance
+      path: /solution/bpm/
+- title: Devops 
+  pages:
+    - title: Continuous Integration
+      path: /devops/ci/
+    - title: Continuous Deployment
+      path: /devops/cd/
+- title: Multi-cloud management
+  pages:
+    - title: Problem statement
+      path: /mcm/problem/
+    - title: Products deployment
+      path: /mcm/deploy-products/
+    - title: Solution deployment
+      path: /mcm/deploy-solution/
+- title: Additional reading
+  pages:
+    - path: /additional-reading/

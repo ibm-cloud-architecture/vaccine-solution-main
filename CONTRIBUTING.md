@@ -1,4 +1,5 @@
 ## Contributing to IBM Cloud Architecture reference applications
+
 Anyone can contribute to IBM Cloud Architecture reference applications and their associated projects, whether you are an IBMer or not.
 We welcome your collaboration & contributions happily, as our reference applications are meant to reflect your real world scenarios.
 There are multiple ways to contribute: report bugs and improvement suggestions, improve documentation, and contribute code.
@@ -105,6 +106,7 @@ Once the pull request has been reviewed, accepted and merged into the main githu
     ```
 
 ### What happens next?
+
 - All pull requests will be automatically built and unit tested by travis-ci, when implemented by that specific project.
   - You can determine if a given project is enabled for travis-ci unit tests by the existence of a `.travis.yml` file in the root of the repository or branch.
   - When in use, all travis-ci unit tests must pass completely before any further review or discussion takes place.

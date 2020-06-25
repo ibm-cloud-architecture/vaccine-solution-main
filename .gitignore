@@ -1,1 +1,8 @@
 site/
+docs/node_modules/
+gatsby-docs/node_modules/
+site/
+docs-archive/
+docs/public/
+docs/node_modules/
+docs/.cache/

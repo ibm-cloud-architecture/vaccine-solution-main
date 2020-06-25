@@ -10,8 +10,8 @@ Person(ManufacturerMgr,Staff,"Manufacturer Mgr")
 Person(ReeferOperator,Staff,"Reefer Operator")
 System_Ext(reefer,"Refrigerator Container IoT")
 System_Boundary(vms,"Vaccine_Monitoring_Solution") {
-    Container(app, "Manufacturing Tracking Portal", "Javascript, Angular", "Allows customers to enter shipping order")
-  
+    Container(app, "Vaccine Order Portal", "Javascript, Angular", "Allows staff to enter shipping order")
+    Container(orderms,"Order management Service","Java", "Microservice to manage order")
     ContainerDb(vaccineDB,"Vaccine DB","DB2","Persist Vaccine data and states")
   
     Container(reefers_mgr,"Reefer Mgr","Java, Springboot","Microservice to manage reefer container entities")
@@ -21,7 +21,7 @@ System_Boundary(vms,"Vaccine_Monitoring_Solution") {
 
     Container(cold_chain_monitoring,"Cold Chain Monitoring","Agent, Kafka Stream","Process Telemetries in real time")
     Container(blockchain,"Blockchain","Blockchain API","Blockchain")
-   
+    Container(optim,"Order and Reefer Container Optimization","CPLEX API","CPLEX")
     Container(maintenance_process,"Maintenance Process","BPM","Business process to track reefer container maintenance")
     Container(watson_ml,"Anomaly detection scoring","Watson ML","Anomaly detection scoring")
     Container(vaccine_mgr,"Vaccine Mgr","Java,Quarkus","Microservice managing Vaccine entities")
@@ -31,6 +31,7 @@ System_Boundary(vms,"Vaccine_Monitoring_Solution") {
 }
 Rel(ManufacturerQA,app,"Triggers QA validation","HTTPS")
 Rel(ManufacturerMgr,app,"Mamages vaccine process","HTTPS")
+Rel(app,orderms,"Uses", "HTTPS")
 Rel(ReeferOperator,maintenance_process,"Process refrigerator maintenance","HTTPS")
 Rel(app,reefers_mgr,"Uses", "HTTPS")
 Rel(app,vaccine_mgr,"Uses", "HTTPS")
@@ -39,6 +40,7 @@ Rel(reefers_mgr,reeferDB,"Persists reefers to","JDBC")
 
 Rel(message_bus, vaccine_mgr, "Subscribes to raw material events","HTTPS,Kafka")
 Rel(vaccine_mgr,message_bus, "Publishes vaccine lot events","HTTPS,Kafka")
+Rel(orderms,optim,"Scedules container allocation","HTTPS")
 Rel(message_bus, reefers_mgr, "Subscribes to vaccine events","HTTPS,Kafka")
 Rel(message_bus,cold_chain_monitoring,"Subscribes telemetries","HTTPS,Kafka")
 Rel(cold_chain_monitoring,reefers_mgr,"Notifies","Events")
