@@ -4,7 +4,7 @@ import ResourceLinks from 'gatsby-theme-carbon/src/components/LeftNav/ResourceLi
 const links = [
   {
     title: 'Github',
-    href: 'https://github.ibm.com/vaccine-cold-chain',
+    href: 'https://github.ibm.com/vaccine-cold-chain/vaccine-cold-chain-main',
   }
 ];
 

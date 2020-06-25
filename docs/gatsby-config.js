@@ -5,7 +5,7 @@ module.exports = {
     keywords: 'gatsby,theme,carbon',
     author: 'IBM Garage Solution Engineering'
   },
-  pathPrefix: '/vaccinesolution',
+  pathPrefix: '/vaccine-cold-chain/vaccine-cold-chain-main/',
   plugins: [
     {
       resolve: 'gatsby-theme-carbon',

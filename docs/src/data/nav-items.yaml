@@ -10,10 +10,16 @@
       path: /design/comp-view/
     - title: Solution Builder (CP4App)
       path: /design/cp4a-sol-builder/
+    - title: Vaccine Order & Container Optimization
+      path: /design/voco/
+    - title: Collect data
+      path: /solution/cp4d/
+    - title: Define the anomaly detection scoring model with Watson Studio
+      path: /analyze/ws-ml-dev
 - title: Solution Anatomy
   pages:
     - title: IoT Simulator
-      path: /solution/reefer-iot/
+      path: /solution/reefer-iot/     
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
 - title: Devops 
