@@ -1,11 +1,24 @@
 ---
 title: The Reefer Simulator as web app
-description: The Reefer Simulator as web app
+description: Simple Refrigerator container internet of thing simulator to control temperature, co2, o2 or power sensors to help build dataset or run time monitoring solution.
 ---
 
-The Simulator webapp is a simple python (3.7) Flask web app exposing a REST POST end point to control the type of simulation to run and to produce Reefer telemetry events to kafka `telemetriescd ..` topic.
 
-## Application requirements
+<PageDescription>
+This Simulator webapp is a simple python (3.7) Flask web app exposing a REST POST end point to control the type of simulation to run and to produce Reefer telemetry events to kafka `telemetries` topic.
+</PageDescription>
+
+<AnchorLinks>
+  <AnchorLink>Overview</AnchorLink>
+  <AnchorLink>Build</AnchorLink>
+  <AnchorLink>Run</AnchorLink>
+  <AnchorLink>Usage Details</AnchorLink>
+</AnchorLinks>
+
+## Overview
+
+
+### Application requirements
 
 The simulator is not in the critical path for production like component. It is here to help us develop the other components of the solution as we do not have real life Refrigerator container. Here are the simple user stories for this app:
 
@@ -13,16 +26,19 @@ The simulator is not in the critical path for production like component. It is h
 1. when I want to generate mockup telemetries data for my data scientist friend, I want to be able to simulate co2 sensor, o2 sensor, temperature and power sensor issue so I can get relevant data for the machine learning model to make sense
 1. when I want to generate mockup telemetries data for my data scientist friend, I want to start the simulator tool from command line using parameter so I can get save data to a remote document oriented database: mongodb on IBM cloud.
 1. when I want to demonstrate the solution, I want to call a REST api to control the generation of faulty sensor data so I can get the scoring service returning maintenance needed.
+1. when I want to demonstrate the cold chain violation, I want to call a REST api to control a change to the temperature over a time period so cold chain violation can be identified with a complex event processing or AI model.
 
-The simulator needs to integrate with kafka / IBM Event Streams deployed as service on the cloud or on OpenDshift cluster .
+![1](./images/reefer-simul-1.png)
 
-## Design approach
+The simulator needs to integrate with kafka / IBM Event Streams deployed as service on the cloud or deployed on OpenDshift cluster using Cloud Pak for Integration.
+
+### Design approach
 
 To support remote control of the simulator while running as webapp, we define a POST operation on the `/control` URL:
 
 ![1](images/simulapp-control-swagger.png)
 
- with a json control object to define the number records to simulate, the sensor to impact (co2sensor, temperature, o2sensor, power) , the container ID, (one of C01, C02, C03, C04) which carries the product referenced by product_id (one of P01, P02, P03, P04, P05) - The P01 is the covid-19 vaccine:
+ The Json control object defines the number records to produce, the sensor to impact (co2sensor, temperature, o2sensor, power) , the container ID, (one of C01, C02, C03, C04) which carries the product referenced by product_id (one of P01, P02, P03, P04, P05) - The P01 is the covid-19 vaccine:
 
 ```json
     { 'containerID': 'C02',
@@ -36,21 +52,17 @@ We have tried to support a domain driven design approach to structure the code, 
 
 As the simulator is also a webapp we need to package it with [Flask](https://www.fullstackpython.com/flask.html) and run it using one of the Web Server Gateway Interface (WSGI) implementation, like [Gunicorn](http://docs.gunicorn.org/).
 
-We recommend to follow [Flask tutorial](https://flask.palletsprojects.com/en/1.1.x/tutorial/) if you do not know this python library to develop web app or REST service.
+If you want to go over the code, ee recommend to follow [Flask tutorial](https://flask.palletsprojects.com/en/1.1.x/tutorial/).
 
-Flask is a simple library to implement REST based microservice and web application in python. It has other related projects to add interesting features to develop production application. The standard development includes defining routes, function to support handling the request and generating HTTP response, but also defining APIs... Read more with the [explore Flask book online](http://exploreflask.com/en/latest/).
+Flask is a simple library to implement REST based microservice and web application in Python. It has other related projects to add interesting features to develop production ready application. The standard development includes defining routes, function to support handling the request and generating HTTP response, but also defining APIs... Read more with the [explore Flask book online](http://exploreflask.com/en/latest/).
 
 Flask is mono threaded so it fits well in a simple web application for development purpose, but for production it is recommended to add a web server like [Gunicorn](https://gunicorn.org/) to handle multiple concurrent requests.
 
-## Anatomy
+### Anatomy
 
 The application is built using [Appsody](https://appsody.dev). The [Appsody CLI](https://appsody.dev/docs/getting-started/installation) is required locally to build and deploy the application properly.
 
 The app is done using Flask, and the code is generated using `appsody init python-flask` command with the Python Flask appsody stack and template.
-
-![Appsody components](images/appsody-concept.png)
-
-Appsody helps developer to do not worry about the details of k8s deployment and build. During a Appsody run, debug or test step (2), Appsody creates a Docker container based on the parent stack Dockerfile, and combines application code with the source code in the template.
 
 We recommend reading [the Python Flask Appsody Stack git hub repo](https://github.com/appsody/stacks/tree/master/incubator/python-flask) to get familiar with the appsody python stack.
 
@@ -69,11 +81,11 @@ from server.routes.prometheus import metrics_bp
 app.register_blueprint(metrics_bp)
 ```
 
-This code is not updateable, as it is part of the image. But we can add our business logic as part of the `domain/__init__.py` code using another [Flask blueprints](https://flask.palletsprojects.com/en/1.1.x/blueprints/) module [api/controller.py]().
+This code is not updateable, as it is part of the appsody stack image. But we can add our business logic as part of the `domain/__init__.py` code using another [Flask blueprints](https://flask.palletsprojects.com/en/1.1.x/blueprints/) module [api/controller.py]().
 
 The `userapp` module is defined when appsody integrates our code with the base stack image using Docker. Below is an extract of the docker file managing module installation and defining what appsody does during build, run and test:
 
-```
+```dockerfile
 ENV APPSODY_MOUNTS=/:/project/userapp
 ENV APPSODY_DEPS=/project/deps
 WORKDIR /project
@@ -82,6 +94,7 @@ ENV FLASK_APP=server/__init__.py
 ```
 
 Looking at the content of the final docker container running the application we can see this structure:
+
 ```
 /project
 |-- Dockerfile
@@ -104,7 +117,7 @@ app.register_blueprint(control_blueprint)
 
 To define the API, we use [Flasgger](https://github.com/flasgger/flasgger) as an extension to Flask to extract [Open API specification](https://swagger.io/docs/specification/about/) from the code. It comes with Swagger UI, so we can see the API documentation of the microservice at the URL `/apidocs`.  It can also validate the data according to the schema defined.
 
-For the POST /control we define the using Swagger 2.0 the API in a separate file: `api/controlapi.yml` and import it at the method level to support the POSt operation. This method is defined in its blueprint as a REST resource. The code [controller.py](https://github.com/ibm-cloud-architecture/refarch-reefer-ml/blob/master/simulator/api/controller.py) is under `api` folder.
+For the POST `/control` we defined the Swagger 2.0 API in a separate file: `api/controlapi.yml` and import it at the method level to support the POST operation. This method is defined in its blueprint as a REST resource. The code [controller.py](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator/blob/master/simulator/api/controller.py) is under `api` folder.
 
 Below is a code extract to illustrate the use of Flask-RESTful and blueprint and the swagger annotation:
 
@@ -142,34 +155,51 @@ Kafka options are:
 [Container] {'bootstrap.servers': 'eventstream140-ibm-es-proxy-route-broker-0-eventstreams.apps.green.ocp.csplab.local:443', 'group.id': 'ReeferTelemetryProducers', 'security.protocol': 'SASL_SSL', 'sasl.mechanisms': 'PLAIN', 'sasl.username': 'token', 'sasl.password': 'xCByo4478xQH...EVdcbGNCtLLuItKgVDc', 'ssl.ca.location': '/project/userapp/certs/es-cert.pem'}
 ```
 
-## Testing
 
-### Unit test the Simulator
+**Github repository:** [reeferiotsimulator](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator)
+
+**Kafka topics produced to:** telemetries
+
+## Build
+
+This microservice is built using the Appsody development framework. The Appsody CLI is a required prerequisite for building the application locally.
+
+Appsody will build the application by pulling the contents of the Appsody Stack it is based on and then performing the local application build inside the containerized environment:
+
+`appsody build -t ibmcase/vcc-reefersimulator:1.0.0 --push`
+
+You can optionally specify a container tag. If left blank, latest will be used.
+You can optionally supply the --push flag to automatically push the built image to specified remote repository.
+Performing an Appsody build will update the `app-deploy.yaml` file in the same directory with current information for the application image, labels, and annotations fields.
+
+### Testing
+
+#### Unit test the Simulator
 
 The test coverage is not great yet. To run the test use `appsody test`.
 
-```
-cd reeferiotsimulator
-./startPythonEnv
+```shell
+cd reeferiotsimulator/scripts
+./startPythonEnv.sh
 root@1de81b16f940:/# export PYTHONPATH=/home/reeferiotsimulator
 root@1de81b16f940:/# cd /home/reeferiotsimulator
-root@1de81b16f940:/# python tests/unit/TestSimulator.py
+root@1de81b16f940:/# python test/unit/TestSimulator.py
 ```
 
-### Functional testing
+#### Functional testing
 
 Use the web browser or a Postman to go to the URL: [http://localhost:8080/control](http://localhost:8080/control) and do a POST. Here is an image of the open API UI:
 
 ![](images/simulapp-control-openapi.png)
 
+## Run
 
-## Kubernetes deployment
+###  Deployment
 
-1. There are three required configuration elements for connectivity to IBM Event Streams (Kafka) prior to deploy:
+1. There are three required configuration elements for connectivity to IBM Event Streams (Kafka) prior to deploy this app:
 
-  * A `ConfigMap` named `kafka-brokers` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-kafka-brokers_1)**
-  * A `Secret` named `eventstreams-api-key` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-api-key_1)**
-
+    * A `ConfigMap` named `kafka-brokers` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-kafka-brokers_1)**
+    * A `Secret` named `eventstreams-api-key` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-api-key_1)**
 
 1. Once those elements are defined it is important to configure the app so it can retrieve those information via environment variables. With Appsody the file `appsody-config.yaml` is supporting these configurations. 
 

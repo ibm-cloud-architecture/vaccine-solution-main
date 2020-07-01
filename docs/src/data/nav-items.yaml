@@ -19,7 +19,11 @@
 - title: Solution Anatomy
   pages:
     - title: IoT Simulator
-      path: /solution/reefer-iot/     
+      path: /solution/reefer-iot/   
+    - title: Order management service
+      path: /solution/orderms/     
+    - title: Cold Chain Monitoring
+      path: /solution/cold-monitoring/     
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
 - title: Devops 
