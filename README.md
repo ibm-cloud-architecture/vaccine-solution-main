@@ -6,24 +6,21 @@ The content of this repository is presented [in a BOOK view](https://pages.githu
 
 ## Building this booklet locally
 
-The content of this repository is written with markdown files, packaged with [MkDocs](https://www.mkdocs.org/) and can be built into a book-readable format by MkDocs build processes.
+* Under the docs folder, the first time do a `npm install`
+* To run the doc locally do: `npm run dev`
+* To pushing the book to GitHub Pages: `npm run deploy`
 
-1. Install MkDocs locally following the [official documentation instructions](https://www.mkdocs.org/#installation). On Mac use the command `brew install mkdocs`.
-1. Install Material plugin for mkdocs:  `pip install mkdocs-material` 
-2. `git clone https://github.com/ibm-cloud-architecture/vaccine-cold-chain.git` _(or your forked repository if you plan to edit)_
-3. `cd vaccine-cold-chain`
-4. `mkdocs serve`
-5. Go to `http://127.0.0.1:8000/` in your browser.
+## To update doc content
 
-### Pushing the book to GitHub Pages
+The navigation is in the `docs/src/data` folder file `nav-items.yaml`.
 
-1. Ensure that all your local changes to the `master` branch have been committed and pushed to the remote repository.
-   1. `git push origin master`
-2. Ensure that you have the latest commits to the `gh-pages` branch, so you can get others' updates.
-	```bash
-	git checkout gh-pages
-	git pull origin gh-pages
-	
-	git checkout master
-	```
-3. Run `mkdocs gh-deploy` from the root refarch-reefer-ml directory.
+The content is in the `docs/src/pages` folder. Then the folders content the following:
+
+* index.md is the first main page
+* design folder includes the articles related to the design of the solution
+* solution folder includes simple description of each service of the solution
+* mcm is for content around multicloud management
+* devops is to include articles on CI and CD.
+* analyze is for the Watson ML work.
+* The diagrams are in a ppt file named: `docs/VaccinTransportation-Usecases.pptx`. Use snapit to build a png file from one of the diagram. Png files are going to images folder in the corresponding subject area.
+
