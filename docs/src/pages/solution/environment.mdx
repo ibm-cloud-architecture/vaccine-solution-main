@@ -1,0 +1,16 @@
+---
+title: Physical Deployment
+description: Present the physical deployment of the solution on multi cloud
+---
+
+The solution is using different IBM product packaging, but most of them are exposed in Operator catalog on OpenShift and can be installed in few clicks. At the lower level of the stack OpenShift delivers the uniform management and orchestration of the different applications running on it. It can run on most of the cloud providers on the market. 
+
+
+ ![1](./images/env-1.png)
+
+The microservices developed for this MVP solution (Reefer IoT simulator, Reefer Manager, Cold Chain montoring agent, Order managers) are developed, and continuously deployed with Cloud Pak for Application capabilities. Most of those services are event driven, leveraging Event Streams as Kafka based event backbone. API can be exposed and managed with API management, and integration with existing system can also be done with MQ queues. The business process to engage human to do the reefer maintenance runs on BPM product as part of the cloud pak for automation.
+
+The data governance is controlled by the cloud pak for data product portfolio, and the anomaly detection is developed with Watson Studio and deployed with Watson ML pipeline. 
+
+Finally the multi cloud management platform ensures the deployment of the products and the solutions on multi cloud providers. 
+ 

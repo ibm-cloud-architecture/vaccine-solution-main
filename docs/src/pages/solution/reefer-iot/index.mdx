@@ -28,9 +28,9 @@ The simulator is not in the critical path for production like component. It is h
 1. when I want to demonstrate the solution, I want to call a REST api to control the generation of faulty sensor data so I can get the scoring service returning maintenance needed.
 1. when I want to demonstrate the cold chain violation, I want to call a REST api to control a change to the temperature over a time period so cold chain violation can be identified with a complex event processing or AI model.
 
-![1](./images/reefer-simul-1.png)
+ ![1](./images/reefer-simul-1.png)
 
-The simulator needs to integrate with kafka / IBM Event Streams deployed as service on the cloud or deployed on OpenDshift cluster using Cloud Pak for Integration.
+The simulator needs to integrate with kafka / IBM Event Streams deployed as service on the cloud or deployed on OpenShift cluster using Cloud Pak for Integration.
 
 ### Design approach
 
@@ -48,7 +48,7 @@ To support remote control of the simulator while running as webapp, we define a 
     }
 ```
 
-We have tried to support a domain driven design approach to structure the code, with domain, infrastructure and app modules. The domain module has a unique class for the simulator which main goals is to generate tuples or records for the different simulation types. It is reused by the standalone simulation CLI tool to generate data at rest.
+We have tried to support a domain driven design approach to structure the code, with domain, infrastructure and app modules. The domain module has a unique class for the simulator which main goal is to generate data tuples or records for the different simulation types. It is reused by the standalone simulation CLI tool to generate data at rest, if needed.
 
 As the simulator is also a webapp we need to package it with [Flask](https://www.fullstackpython.com/flask.html) and run it using one of the Web Server Gateway Interface (WSGI) implementation, like [Gunicorn](http://docs.gunicorn.org/).
 
@@ -159,6 +159,37 @@ Kafka options are:
 **Github repository:** [reeferiotsimulator](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator)
 
 **Kafka topics produced to:** telemetries
+
+**Event sents to the topic:**
+
+```python
+{"containerID": metric[0],
+"timestamp": str(metric[1]),
+"type":"ReeferTelemetries",
+"payload"={ "timestamp": "2019-09-04 T15:31 Z",
+            "containerID": "C101",
+            "product_id": "P02",
+            "sensors": {
+              "temperature": 2.49647,
+              "oxygen_level" : 20.4543,
+              "nitrogen_level" : 79.4046,
+              "carbon_dioxide_level" : 4.42579,
+              "humidity_level" : 60.3148,
+              "fan_1": "True",
+              "fan_2" : "True",
+              "fan_3" : "True",
+              "ambiant_temperature": 19.8447
+            },
+            "content_type": 1,
+            "target_temperature": 6.0,
+            "kilowatts": 3.44686,
+            "latitude": "37.8226902168957,",
+            "longitude": "-122.3248956640928",
+            "time_door_open" : 300,
+            "defrost_cycle": 6
+        }
+}
+```
 
 ## Build
 
