@@ -15,7 +15,7 @@
     - title: Solution Builder (CP4App)
       path: /design/cp4a-sol-builder/
     - title: Vaccine Order & Container Optimization
-      path: /design/voco/
+      path: /design/voro/
     - title: Collect data
       path: /solution/cp4d/
     - title: Define the anomaly detection scoring model with Watson Studio
