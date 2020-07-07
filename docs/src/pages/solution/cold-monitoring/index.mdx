@@ -15,32 +15,96 @@ This microservice aims to monitor the cold-chain over time and to assess is the 
 
 ## Overview
 
+The reefer monitoring agent get telemetry events from a kafka topic and process them using stateful operation on time window, and then creates reefer-cold-chain-violation event to the reefer kafka topic in case the temperature goes over a define threshold over a specific time period. For each received metrics it can also call an anomaly detection service to compute the risk of failure. 
+
 ![](./images/cold-monitoring-1.png)
 
-**Github repository:** []()
+In case of cold chain violation the impacted lots needs to be reported as spoiled via new records logged to the blockchain hyperledger. This is the responsability of the reefer manager microservice has it has visibility of the loaded vaccine lots for each container. Telemetry events have information on the sensors and the geolocation of the reefer.
 
-**Kafka topics consumed from:**
+**Github repository:** [vaccine-cold-monitoring](https://github.ibm.com/vaccine-cold-chain/coldchainmonitoring)
 
-**Kafka topics produced to:**
+**Kafka topics consumed from:** telemetries as defined by:
 
-**Events reacted to:**
+```yaml
+apiVersion: kafka.strimzi.io/v1beta1
+  kind: KafkaTopic
+  metadata:
+    name: telemetries
+    labels:
+      strimzi.io/cluster: event-streams
+  spec:
+    partitions: 10
+    replicas: 3
+    config:
+      retention.ms: 14400000
+      segment.bytes: 1073741824
+```
 
-**Events produced:**
+**Kafka topics produced to:** reefers in case of anomaly detection or cold chain violation
+
+**Events reacted to:** telemetry events like:
+
+```java
+public class TelemetryEvent {
+
+    public String containerID;
+    public Telemetry payload;
+    public String timestamp;
+    public String type;
+```
+
+and the payload:
+
+```java
+ public String container_id;
+    public String measurement_time;
+    public String product_id;
+    public double temperature;
+    public double target_temperature; 
+    public double ambiant_temperature; 
+    public double kilowatts; 
+    public double time_door_open;
+    public int content_type; 
+    public int defrost_cycle;
+    public double oxygen_level; 
+    public double nitrogen_level; 
+    public double humidity_level;
+    public double target_humidity_level;
+    public double carbon_dioxide_level; 
+    public boolean fan_1; 
+    public boolean fan_2; 
+    public boolean fan_3;
+    public double latitude;
+    public double longitude;
+  
+```
+**Events produced:** reefer anomaly detected and reefer cold chain violated
 
 ## Build
 
 This microservice is built using the [Appsody](https://appsody.dev/) development framework. The [Appsody CLI](https://appsody.dev/docs/installing/installing-appsody) is a required prerequisite for building the application locally.
 
-Appsody will build the application by pulling the contents of the Appsody Stack it is based on and then performing the local application build inside the containerized environment:
+Appsody will build the application by pulling the contents of the Appsody [Garage solution engineering Quarkus Stack](https://github.com/jbcodeforce/appsody-stacks/tree/master/ibm-gse-eda-quarkus) it is based on and then performing the local application build inside the containerized environment:
 
-`appsody build -t <yournamespace>/kcontainer-order-command-ms[:tag] [--push]`
+```shell
+# if not logged yes to your openshift cluster where the docker private registry resides do:
+oc login --token=... --server=https://c...
+# Get the route to reach the docker private registry
+oc get route --all-namespaces | grep registry
+# Define the path as environment variable
+export IMAGE_REGISTRY=default-route-openshift-image-registry.gse-eda-demo-202005-fa9ee67c9ab6a7791435450358e564cc-0000.us-south.containers.appdomain.cloud
+# log to the docker registry using the security token from the openshift console
+docker login $IMAGE_REGISTRY
+# Then build and push the image
+appsody build -t vaccine-cold-chain/vaccine-cold-monitoring:0.0.1 [--push-url $IMAGE_REGISTRY] [--push]
+```
 
 - You can optionally specify a container tag. If left blank, `latest` will be used.
-- You can optionally supply the `--push` flag to automatically push the built image to specified remote repository.
+- You can optionally supply the `--push` flag to automatically push the built image to specified remote repository `--push-url`.
 
 Performing an Appsody build will update the `app-deploy.yaml` file in the same directory with current information for the application image, labels, and annotations fields.
 
-## Run 
+This file needs to be updated to include the different environment variables needed by the application:
 
 ### Deployment Parameters
 
@@ -55,6 +119,7 @@ The following deployment parameters are defined in the `app-deploy.yaml` file:
 | TRUSTSTORE_PWD                           | NO       | The password for the truststore file used for IBM Event Streams server verification.                                   |
 
 
+## Run 
 
 ### Volume mounts
 

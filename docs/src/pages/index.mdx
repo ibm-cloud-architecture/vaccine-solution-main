@@ -4,6 +4,8 @@ description: An innovative vaccine delivery supply chain solution
 ---
 
 
+## Business problem
+
 The challenge healthcare industry is facing in very close time is to deliver a billion doses of the vaccine for COVID-19. A vaccine typically travels through multiple sites before being ready for shipment. Multiple companies are involve to manufacture the vaccines. Vaccines need to be handled at an optimal cool temperature (36-46 degrees F) and managed through the cold chain process. For high-value items like vaccines, clinical trial samples and lifesaving medications,  a fluctuation as minor as 2 degrees Celsius can reduce or even eliminate effectiveness, the stakes couldn't be higher. Variability in events both internally through the business processes and external events impacting the supply chain across multiple business entities coupled with data residing in multiple clouds presents challenges around anomaly detection that ultimately the vaccin developer is responsible to decision and act on by modifying business processes.
 A traditional architecture requires creating new interfaces, integration into systems,  federation and organization of data into a data lake to be ready for any derivation of insights.
 Our demonstration today, showcases a developer ready modern architecture comprising of integrated middleware that are used as building blocks to deliver the end to end solution. Use of DevOps tooling and practices accelerates the solution by x factor.
@@ -34,17 +36,15 @@ The important points we want to consider in this Minimum Viable Solution are:
 ## Solution development process
 
 When developingi innovative solution we are using the [IBM Garage Methodology](https://www.ibm.com/garage/method) to better understand the requirements, push for innovation and lean solution. We have applied this method to deevelop the current Minimum Viable Product for this solution. You can follow the steps as below:
-1. Understand the process using [design thinking and event storming](./design/dtw/).
-1. Model the solution and its components, discovering the microservice [using domain driven design](design/ddd/).
-1. Use Cloud Pak for Application to jump start the development using [Solution Designer](design/cp4a-sol-builder/) and Appsody Java microprofile stacks, combined with the CI/CD capabilities of gitops and Tekton.
-1. Support the continuous integration and deployment to make the development group more efficient.
-1. Use IBM Event Streams as part of the Cloud Pak for Integration to support event sourcing, event driven microservices communication.
-1. Adopt [Blockchain solution](https://www.ibm.com/blockchain) to track the life cycle of the vaccine lots
-1. Use telemetries data to assess cold chain using rules
-1. Use refrigerator sensors' telemetries to develop anomaly detection predictive model
-1. Manage countinuous data pipeline injection with real time data pipeline and data lake.
-1. Manage the important business events into Blockchain to keep single source of trust for the vaccine lots from packaging to delivery.
-1. Integrate business process management to support refrigerator container maintenance as early as possible to avoid failure (See [maintenance process](/solution/bpm/)).
+1. From the IFMA process introduced in previous section, we can work with the subject matter experts to understand the vaccine manufacturing process using [design thinking and event storming workshops](./design/dtw/) so we can understand events, domain and subdomains. 
+1. To model the solution and its components, architects and lead developers apply a [Domain Driven Design]()design/ddd/ approach to discover bounded context and future microservice landscape. From there they can build the traditional [system context view](/design/syst-ctx/) and [component view](/design/comp-view/) necessary to present a minimum viable architecture.
+1. From the decomposition in components, we can jump start the development using [Solution Designer](design/cp4a-sol-builder/) and [Appsody](https://appsody.dev/) Java microprofile stacks ([OpenLiberty](https://openliberty.io/) or [Quarkus](https://quarkus.io/)), combined with the CI/CD capabilities of [gitops](https://www.weave.works/technologies/gitops/) and [Tekton](https://github.com/tektoncd).
+1. The asynchronous nature of the process and the integration between services will mix API calls and event driven solution. To use event driven patterns like event sourcing, CQRS, Saga and applying real time logic on the IoT device metrics, the modern architecture uses Apache Kafka, presented in [IBM Event Streams](https://www.ibm.com/cloud/event-streams) as part of the [Cloud Pak for Integration](https://www.ibm.com/cloud/cloud-pak-for-integration).
+1. The vaccine order stipulates to have a great number of vaccine lots to be delivered to any place in the world. It becomes an supply chain optimization problem, that the development team addressed with a [solution easily integrated](design/voro/) in the end to end process.
+1. Once the vaccine lots are in the refrigerator containers, it is crucial to keep the cold chain end to end, so monitoring the IoT telemetries within [Kafka Streams application](/solution/cold-monitoring/) is very simple, and support all the stateful operators needed to support time based reasoning. This cold chain monitoring is easily enhanced to call a predictive scoring service to detect reefer container anomaly. 
+1. The predictive scoring service to detect reefer container anomaly is developed using a machine learning approach using Watson Studio and Data governance capabilities from the [Cloud Pak for Data](https://www.ibm.com/products/cloud-pak-for-data).
+1. Also tracability is key to avoid fraud, and ensure quality end to end delivery. So the core solution needs to adopt [Blockchain solution](https://www.ibm.com/blockchain) to track the life cycle of the vaccine lots: lot manufacturing events, cold chain violation events, and shipment events are logged into the hyperledger.
+1. Finally to enhance the anomaly detection, we can integrate a human centric business process to support the [refrigerator container maintenance](/solution/bpm/), triggered from the AI scoring service, to avoid bigger and costly failure and optimize the maintenance cost.
 
 
 <InlineNotification kind="warning">The implemented code does not represent any best practices in term of software development and production delivery. Consider to be a "hello world ++" for most of the components. Those components are exposing basic REST end points and a simple data model to support the main concepts of the business problem with adhoc persistence layer.</InlineNotification>

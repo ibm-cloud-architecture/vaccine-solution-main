@@ -1,7 +1,7 @@
 - title: Introduction
   pages:
     - title: Overview
-      path: /introduction/
+      path: /
 - title: Solution Design
   pages:
     - title: Design Thinking and Event Storming
@@ -14,7 +14,7 @@
       path: /design/comp-view/
     - title: Solution Builder (CP4App)
       path: /design/cp4a-sol-builder/
-    - title: Vaccine Order & Container Optimization
+    - title: Vaccine Order & Reefer Optimization
       path: /design/voro/
     - title: Collect data
       path: /solution/cp4d/
@@ -26,6 +26,8 @@
       path: /solution/environment/
     - title: Order management service
       path: /solution/orderms/     
+    - title: Vaccine Order & Reefer Optimization
+      path: /solution/orderms/voro-solution/
     - title: IoT Simulator
       path: /solution/reefer-iot/
     - title: Cold Chain Monitoring
