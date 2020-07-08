@@ -31,7 +31,9 @@
     - title: IoT Simulator
       path: /solution/reefer-iot/
     - title: Cold Chain Monitoring
-      path: /solution/cold-monitoring/     
+      path: /solution/cold-monitoring/   
+    - title: Blockchain
+      path: /solution/blockchain/  
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
 - title: Devops 

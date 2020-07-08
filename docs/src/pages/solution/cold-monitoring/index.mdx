@@ -117,7 +117,10 @@ The following deployment parameters are defined in the `app-deploy.yaml` file:
 | TRUSTSTORE_ENABLED                       | NO       | Required to be set to `true` when connecting to IBM Event Streams on the IBM Cloud Pak for Integration (CP4I).         |
 | TRUSTSTORE_PATH                          | NO       | The local path to the required truststore file when connecting to IBM Event Streams on CP4I. See [**Volume Mounts**](#volume-mounts) below.  |
 | TRUSTSTORE_PWD                           | NO       | The password for the truststore file used for IBM Event Streams server verification.                                   |
-
+| TELEMETRIES_TOPIC | NO | Topic name for the IoT telemetry related events. Defaulted to `telemetries` |
+| REEFER_TOPIC | NO | Topic name for the reefer related events. Defaulted to `reefers` |
+| ANOMALY_DETECTION_URL| NO | URL for the anomaly detection predictive scoring as deployed in Watson ML in Cloud Pak for Data. If not set the reefer monitoring agent will not try to call the scoring. |
+| WL_TOKEN | NO | Authentication bearer token to access the anomaly detection end point.|
 
 ## Run 
 

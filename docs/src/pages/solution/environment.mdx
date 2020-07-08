@@ -13,4 +13,34 @@ The microservices developed for this MVP solution (Reefer IoT simulator, Reefer 
 The data governance is controlled by the cloud pak for data product portfolio, and the anomaly detection is developed with Watson Studio and deployed with Watson ML pipeline. 
 
 Finally the multi cloud management platform ensures the deployment of the products and the solutions on multi cloud providers. 
- 
+
+## Development accelerator tools
+
+Cloud Pak for Application is used to support the development process. Starting from the Solution Builder to defined each component of the solution. The Cloud Pak for application installation instructions follow [the product documentation](https://www.ibm.com/support/knowledgecenter/en/SSCSJL_4.2.x/install-icpa.html)
+
+The Accelerator technology preview is an optional part of the Cloud Pak for Applications v4.2 installation.
+
+A key feature of Accelerators for cloud-native solutions is the implementation of a GitOps configuration to support the cloud infrastructure for an application. GitOps provides a declarative configuration that enables an operator to provision the running application with all the required services in place. 
+
+## Integration
+
+As most of the services developed in this solution are publishing and consuming events, we are using Event Streams (IBM packaging of Apache Kafka) on Cloud Pak for Integration. The components and Kafka relationships are detailed in the diagram below:
+
+ ![2](./images/solution-integration.png)
+
+* OpenShift is the container orchestration platform to run on any cloud providers
+* [Cloud Pak for integration](https://www.ibm.com/support/knowledgecenter/SSGT7J_20.2/welcome.html) is the common layer to define the IBM middleware product catalog and offers a set of common services. From an existing OpenShift cluster it is possible to [add the IBM Operator Catalog](https://www.ibm.com/support/knowledgecenter/SSGT7J_20.2/install/install_online_catalog_sources.html) and the IBM Common Services Catalog to your cluster and using OLM to install the IBM operators. Once the catalog is integrated, you can [get an entitlement key](https://www.ibm.com/support/knowledgecenter/SSGT7J_20.2/install/entitlement_key.html) to run licensed software.
+* In cloud pak for integration we can deploy a Kafka Cluster via [IBM Event Streams](https://ibm.github.io/event-streams/about/overview/) operator. Event Streams is an operator-based release and uses custom resources to define your Event Streams configurations. The Event Streams operator uses the custom resources to deploy and manage the entire lifecycle of your Event Streams instances. Custom resources are presented as YAML configuration documents that define instances of the EventStreams custom resource type. The installation instructions are in the [product documentation](https://ibm.github.io/event-streams/installing/installing/).
+
+ We strongly recommend to follow [this video](https://www.youtube.com/watch?v=nSza-RwvxSE&t=132s) to see how easy is to get started with Event Streams v10. Installation is in two step, first time deploy the Event Streams operator, which will also automatically deploy the required IBM Cloud Platform Common Services if not present.
+
+ ![3](./images/es-operator.png)
+
+ Once operator installed, then create cluster instance, users, topics...
+
+ ![4](./images/es-installation.png)
+
+  Once installation is done, install CLI if you want to automate some of the creation of topics, users... See [the post installation document](https://ibm.github.io/event-streams/installing/post-installation/).
+
+* The topics (telemetries, orders, reefers) for the solution are defined in each of the project as yaml files. All Event Streams Kafka resources can be  defined as configuration files and managed with your code repository.
+* Each components of the solution that are producer, consumer or both, and are deployed in the same OpenShift cluster and set KAFKA_BROKERS and security settings as environment variables, also defined as secrets and config maps. 
