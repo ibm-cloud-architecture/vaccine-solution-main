@@ -1,0 +1,145 @@
+---
+title: DevOps with GitOps and Tekton
+description: DevOps with GitOps and Tekton
+---
+
+## GitOps
+
+Our Continuous Integration (CI) approach is one of _"zero-infrastructure overhead"_, as such Cloud Pak for application and the garage team have adopted [GitOps](https://www.gitops.tech/#what-is-gitops) where a [specific git repository](https://github.ibm.com/vaccine-cold-chain/gitops-dev) contains declarative descriptions of the infrastructure currently desired environments (dev, staging, production), combined with [Appsody deploy]() commands and [Tekton](#tekton-pipeline) to automate the devops pipeline.
+
+Each application repository includes deployment manifests (app-deploy.yaml) to configure the application at deployment time.  
+
+The [gitops-dev](https://github.ibm.com/vaccine-cold-chain/gitops-dev) repository contains all deployment manifests of the currently desired infrastructure of an deployment environment.
+
+We are using a pull-based deployments, where the build pipeline is triggered by a pull requests or a commit on the application repository, and an operator, running in the solution namespace, is continuously comparing the desired state in the environment repository with the actual state in the deployed infrastructure.
+
+## Tekton Pipeline
+
+[Tekton](https://tekton.dev/) is an open source project that provides a framework to create cloud-native CI/CD pipelines quickly. As a Kubernetes-native framework, Tekton makes it easier to deploy across multiple cloud providers or hybrid environments.
+
+### Pre-requisites
+
+* [Have Appsody CLI install locally and Appsody Operator deployed to your OpenShift cluster](https://appsody.dev/docs/using-appsody/deploying/)
+* [Your OpenShift cluster can access the github repository where the source code resides]()
+* [Your OpenShift cluster can access a docker registry like docker hub or internal registry within the cluster]()
+* Defined a secret for docker registry credential: 
+    * First if not done before, create an access token to your dockerhub account, using the setting > security option.
+    * Then execute: `oc create secret generic dockerhub-secret --from-literal=token=<you-created-token-on-dockerhub>`
+
+* [Have Tekton CLI installed](https://github.com/tektoncd/cli#installing-tkn)
+
+### Install Tekton pipeline
+
+See the [instructions here](https://github.com/tektoncd/pipeline/blob/master/docs/install.md) which can be summarized by the following steps:
+
+```shell
+# create dedicated pipeline project
+oc new-project tekton-pipelines
+# Give access to current user and to the appsody service account.
+oc adm policy add-scc-to-user anyuid -z tekton-pipelines-controller
+# install tekton
+oc apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.notags.yaml
+# Verify pods are started
+oc get pods --namespace tekton-pipelines --watch
+
+NAME                                           READY     STATUS    RESTARTS   AGE
+tekton-pipelines-controller-6ff7d8f9bf-k7ks2   1/1       Running   0          4m
+tekton-pipelines-webhook-7986458f5f-kr78z      1/1       Running   0          4m
+# Add persistence volume
+oc apply -f tektom/pv.yaml
+```
+
+For a given solution including multiple components deployed as pods, in the same namespace it is recommended to create a service account like the following manifest.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vaccine-solution-sa
+secrets:
+    - name: dockerhub-secret
+---  
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: appsody-admin
+subjects:
+- kind: ServiceAccount
+  name: vaccine-solution-sa 
+  namespace: vaccine-cold-chain
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+```
+
+One of such file is in the gitops-ev project. 
+
+```shell
+oc apply -f tekton/appsody-tekton.yaml
+```
+
+
+### Application deployment
+
+Each application is built with Appsody and deployed via Appsody operator. Defined in the [tekton directory](https://github.ibm.com/vaccine-cold-chain/gitops-dev/tree/master/tekton) of the gitops-dev project, we have a simple pipeline that will utilize the appsody deploy command to deploy the generated AppsodyApplication CRD YAML to the target environment.
+
+Tekton Pipelines run on the same cluster (and often in the same namespace!) as your running application code, thus allowing for more programmatic control over the deployment, management, operations, and existence of your application components. The key artifact that enables Tekton to deploy any Appsody-based microservice is the generated `app-deploy.yaml` file. 
+
+We need to define a pipeline which may look the same for each project. Still for clear separation of concern, each java projet includes a `src/main/tekton` folder with the needed pipeline, resources and task manifests. Here is an example of pipeline: 
+
+```yaml
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: appsody-build-pipeline
+spec:
+  resources:
+    - name: git-source
+      type: git
+    - name: docker-image
+      type: image
+  tasks:
+    - name: appsody-build
+      taskRef:
+        name: appsody-build-push-deploy-task
+      resources:
+        inputs:
+        - name: git-source
+          resource: git-source
+        - name: docker-image
+          resource: docker-image
+      params:
+      - name: app-deploy-file-name
+        value: app-deploy.yaml
+```
+
+and pipeline resources that define the target docker image name and the URL of the source repository, those resources are per project. See an example [here]()
+
+The pipeline is executing a Tekton task named `appsody-build-push-deploy-task` and example can be found [here](https://raw.githubusercontent.com/appsody/tekton-example/master/appsody-build-push-deploy.yaml). 
+
+When `appsody build` is executed the deployment manifest for the application (app-deploy.yaml file) is created or updated, the deployment will use this file for the `oc apply ` command.
+
+The image url must match the definition of the Docker image resource that you created for the pipeline.
+
+To run the pipeline manually use the pipeline-run manifest. For example for the reefer monitorign service the manifest is under the `scripts` folder:
+
+```shell
+oc apply -f scripts/reefer-monitoring-pipeline-run.yaml 
+# verify the pipeline run
+tkn pipelinerun list
+NAME                                  STARTED          DURATION   STATUS
+reefer-monitoring-pipeline-run-task   31 seconds ago   ---        Running
+```
+
+Once the `appsody deploy` command is succesful, the Appsody Operator and Kubernetes takes care of the rest and reconciles the necessary underlying Kubernetes artifacts that are required to fulfill the requirements of serving up the application code in real-time!
+
+## Recommended readings
+
+* [What is gitops](https://www.gitops.tech/)
+* [Tekton playground on katacoda](https://www.katacoda.com/ratrosyu/scenarios/playground)
+* [Using Tekton with Appsody example](https://github.com/appsody/tekton-example)
+* [IBM Multicloud Manager is introducing GitOps support with Argo CD](https://www.ibm.com/cloud/blog/simplify-and-automate-deployments-using-gitops-with-ibm-multicloud-manager-3-1-2)
+* [Fun with GitOps stitching Kubernetes, Tekton, and Argo](https://medium.com/ibm-garage/fun-with-gitops-stitching-kubernetes-tekton-and-argo-ee348afd0b08)
+* [OpenShift Pipelines - Cloud-native CI/CD](https://www.openshift.com/learn/topics/pipelines)
+

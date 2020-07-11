@@ -38,10 +38,8 @@
       path: /solution/bpm/
 - title: Devops 
   pages:
-    - title: Continuous Integration
-      path: /devops/ci/
-    - title: Continuous Deployment
-      path: /devops/cd/
+    - title: GitOps and Tekton
+      path: /devops/
 - title: Multi-cloud management
   pages:
     - title: Problem statement

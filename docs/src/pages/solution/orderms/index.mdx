@@ -36,18 +36,17 @@ The order follows a set of states as described in the following diagram:
 The service produces to `orders` topic. Below is a representation of a Strimzi topic definition:
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta1
-  kind: KafkaTopic
-  metadata:
-    name: orders
-    labels:
-      strimzi.io/cluster: event-streams
-  spec:
-    partitions: 3
-    replicas: 3
-    config:
-      retention.ms: 7200000
-      segment.bytes: 1073741824
+apiVersion: eventstreams.ibm.com/v1beta1
+kind: KafkaTopic
+metadata:
+  name: orders
+  namespace: cp4i
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1073741824
 ```
 
 **Events produced:**
@@ -82,7 +81,7 @@ Performing an Appsody build will update the `app-deploy.yaml` file in the same d
 
 ### Pre requisites
 
-The orders are persisted in and external DB2 instance running on Cloud Pack for Application. You need to get the username and password to connect to the DB2 instance and the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
+The orders are persisted in an external DB2 instance running on IBM Cloud Pack. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
 
 ### Deployment Parameters
 
@@ -99,7 +98,7 @@ The following deployment parameters are defined in the `app-deploy.yaml` file:
 | DBPWD | YES | Database user password |
 | SSLJDBCURL | YES | JDBC URL to connect to the database | 
 
-You can define a `setenv.sh` script to export the environment variables.
+You can define a `setenv.sh` script to export the environment variables. The `scripts` folder has a template for this file with the environment variables needed to run locally.
 
 ### Run Locally
 
@@ -117,12 +116,10 @@ source ./scripts/setenv.sh
 ```shell
 source ./scripts/setenv.sh
 
-appsody run --docker-options "-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$KAFKA_APIKEY -e DBPWD=$DBPWD -e DBUSER=$DBUSER -e SSLJDBCURL=$SSLJDBCURL  -v $(pwd)/certs/es-cert.jks:/deployments/certs/es-cert.jks " vaccine-order-mgr:0.0.1`
+appsody run --docker-options "-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$KAFKA_APIKEY -e DBPWD=$DBPWD -e DBUSER=$DBUSER -e SSLJDBCURL=$SSLJDBCURL  -v $(pwd)/certs/es-cert.jks:/deployments/certs/es-cert.jks"
 ```
 
 For more details on running the microservice locally, consult the Appsody run documentation as well as the deployment information contained in the app-deploy.yaml file.
-
-
 
 ### Volume mounts
 
@@ -131,8 +128,6 @@ The order manager microservice requires up to one file to be injected at runtime
 The `TRUSTSTORE_PATH` parameter is documented in the **Event Streams Certificates** section of the [Prerequisites](/microservices/prereqs/#ibm-event-streams-on-redhat-openshift-container-platform) page. The Appsody run command should include a parameter similar to `-v ./certs/es-cert.jks:/config/resources/security/es-cert.jks` in its `--docker-options` string to run this microservice locally.
 
 **Example:** `appsody run --docker-options "-v /Users/myuser/Downloads/es-cert.jks:/config/resources/security/es-ssl/es-cert.jks" ...`
-
-
 
 ### Running on Openshift 
 
