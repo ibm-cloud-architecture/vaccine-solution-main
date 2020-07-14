@@ -3,6 +3,10 @@ title: DevOps with GitOps and Tekton
 description: DevOps with GitOps and Tekton
 ---
 
+## Development flow 
+
+ ![1](./images/appsody-flow.png)
+
 ## GitOps
 
 Our Continuous Integration (CI) approach is one of _"zero-infrastructure overhead"_, as such Cloud Pak for application and the garage team have adopted [GitOps](https://www.gitops.tech/#what-is-gitops) where a [specific git repository](https://github.ibm.com/vaccine-cold-chain/gitops-dev) contains declarative descriptions of the infrastructure currently desired environments (dev, staging, production), combined with [Appsody deploy]() commands and [Tekton](#tekton-pipeline) to automate the devops pipeline.
