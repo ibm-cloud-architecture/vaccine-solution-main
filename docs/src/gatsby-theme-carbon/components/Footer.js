@@ -13,7 +13,8 @@ const links = {
     { linkText: 'Contributors:' },
     { href: 'https://www.linkedin.com/in/jeromeboyer/', linkText: 'Jerome Boyer' },
     { href: 'https://www.linkedin.com/in/rosowski/', linkText: 'Rick Osowski' },
-    { href: 'https://www.linkedin.com/in/jesus-almaraz-hernandez/', linkText: 'Jesus Almaraz' }
+    { href: 'https://www.linkedin.com/in/sunil-dube-b861861/', linkText: 'Sunil Dube'},
+    { href: 'https://www.linkedin.com/in/orhuani/', linkText: 'Hua Ni' }
   ],
 };
 

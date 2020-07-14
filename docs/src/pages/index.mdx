@@ -3,28 +3,39 @@ title: Vaccine Delivery at Scale
 description: An innovative vaccine delivery supply chain solution
 ---
 
-
-## Business problem
-
 Inspired by J&J’s Road to Vaccine, [![0](./images/road-to-vaccine.png)](https://www.youtube.com/watch?v=koac13B-DvM) that educated the world through its leadership in science and innovation, we invite you on an experiential Vaccine’s Journey with IBM through the lens of technology and open innovations.
 
-As the world awaits the release of the COVID-19 vaccines; we’ve learnt three things about the vaccines themselves:
+## Business scenario
 
-1. The vaccine once manufactured needs to be in a stable cold state up until inoculation
-2. The vaccine travels through various sites across the globe from manufacturing sites to remote clinical trial sites to actual distribution sites to citizens
-3. The vaccines once released could potentially rise to be the #1 counterfeit product in the world
+As the world awaits the release of the COVID-19 vaccines; we’ve learnt four things about the vaccines themselves:
+
+1.	The vaccine once manufactured needs to be in a stable cold state up until inoculation
+2.	The vaccine travels through various sites across the globe from manufacturing sites to remote clinical trial sites to actual distribution sites to citizens
+3.	The vaccines when ready for release will rise to be the #1 counterfeit product in the world
+4.	There will be a need for Billions of vaccine, so the vaccines will be manufactured in multiple locations 
+
 
 Exiting the clinical trial phase; the challenge ahead for vaccine manufacturers along with their manufacturing partners lies in effectively delivering the billion vaccines to the most needed areas of the world under uncertain conditions, constrained supplies for vaccine vials, refrigerator container for transportation and fragmented supply chains. 
 
-It may be possible to use machine learning models to identify potential hotspots with granular location precision to inform the supply chain decisions. This requires trust and transparency in AI before triggering any changes to their supply chain execution. 
+ ![2](./images/biz-arch.png)
 
-A vaccine typically travels through multiple sites before being ready for shipment. Multiple companies are involved to manufacture the vaccines. Vaccines need to be handled at an optimal cool temperature (36-46 degrees F) and managed through the cold chain process. For high-value items like vaccines, clinical trial samples and lifesaving medications,  a fluctuation as minor as 2 degrees Celsius can reduce or even eliminate effectiveness, the stakes couldn't be higher. 
+## Executive Overview
+
+The industry is coming together as an open source project under the Linux foundation to ensure that the authenticity of the vaccine is maintained, and a platform is created that is compliant with the industry and is approved by the FDA. The IBM implementation demo of the platform as shown in the diagram above leverages open hybrid cloud capabilities using IBM Red Hat Openshift on a pharmaceutical industry compliant cloud provider. The platform leverages IBM Cloud Paks and brings together advanced analytics and AI capabilities coupled with events processing to rapidly build and deploy cognitive solutions and intelligent workflows for vaccine distribution optimization, faulty container management and detetction, vaccine program success, order management and fraud and crime prevention for getting the vaccines safely in the hands of the doctors and ensuring the authenticity of the vaccine through block chain and removal of bad batch of vaccines through machine learning models and block chain verification.  IBM’s cloud pak are built on top of IBM Red Hat Open Shift.
+
+In this demo solution we use: 
+
+1. IBM’s cloud pak for application which allows you to build, deploy and run applications and reduces development time by up to 84%. 
+1. IBM’s cloud pak for data allows you to collect, organize, analyze data and infuse insights in processes. It reduces the time to get the data ready for AI to days. 
+1. IBM’s cloud pak for integration allows you to integrate apps, data , cloud services and APIs and eliminates integration cost by up to 33%
+1. IBM’s cloud pak for automation transforms business processes, decisions and content and reduces manual processes up to 80%
+1. IBM’s cloud pak for multicloud management provides multicloud visibility, governance and automation and reduces the IPop expense by up to 75%
 
 Variability in events both internally through the business processes and external events impacting the supply chain across multiple business entities coupled with data residing in multiple clouds presents challenges around anomaly detection that ultimately the vaccin developer is responsible to decision and act on by modifying business processes.
 
 A traditional architecture requires creating new interfaces, integration into systems,  federation and organization of data into a data lake to be ready for any derivation of insights.
 
-Our demonstration today, showcases a developer ready modern architecture comprising of integrated middleware that are used as building blocks to deliver the end to end solution. Use of DevOps tooling and practices accelerates the solution by x factor.
+Our demonstration today, showcases a developer ready modern architecture comprising of integrated middleware that are used as building blocks to deliver the end to end solution. Use of DevOps tooling and practices accelerates the solution by three factor.
 
 ## What we cover
 
@@ -50,6 +61,34 @@ The important points we want to consider in this Minimum Viable Solution are:
 * We assume the lots are within refrigerated containers.
 
 ## Solution development process
+
+IBM research, MIT Data Science Lab and pharmaceutical companies use machine learning models to identify potential hotspots with granular location precision for making informed the supply chain decisions. This requires trust and transparency in AI before triggering any changes to their supply chain execution. 
+
+The diagram below is a minimum viable product solution design
+
+ ![3](./design/images/vaccine-comp-view.png)
+
+We will now highlight features and functions of the solution:
+
+As shown in the component view above, a potential hotspot is detected in Miami, this triggers the creation of orders in the Vaccine Order Portal. The vaccine order stipulates the amount of vaccines to be delivered to any place in the world, with varying level of criticality and delivery timeframe. This triggers the [Order and Reefer optimization](./design/voro/) service that invokes a series of complex optimization planning:
+
+* To optimize the most cost effective vaccine sourcing and shipping routes to meet the demand subjected to the availability of both vaccines and refrigerator containers. 
+* To optimize the flow of vaccine refrigerator containers including repositioning of the empty containers to support the optimal fulfillment plans
+ 
+Furthermore, given the dynamic nature of the situation, the plans need to be continuously optimized with the latest information. 
+
+A vaccine typically travels through multiple sites before being ready for shipment. Multiple companies are involved to manufacture the vaccines. Vaccines need to be handled at an optimal cool temperature (36-46 degrees F) and managed through the cold chain process. For high-value items like vaccines, clinical trial samples and lifesaving medications,  a fluctuation as minor as 2 degrees Celsius can reduce or even eliminate effectiveness, the stakes couldn't be higher. 
+
+As the shipment of vaccines is underway, cold chain monitoring service monitors the performance of the cold chain in real time. This is supported by two components: 
+
+* a real time stateful operator connected to the event streams coming as reefer telemetries: The refrigerated containers, those would be used to ship the Vaccines to the Medical facilities, need monitoring. That is to ensure that all sensors within the containers are working properly so that its internal control system maintains  the necessary temperature and the concentration of cryogenic fluids. Otherwise the Vaccines would be spoiled and cannot be used for the treatment of patients. The data of various sensors from the containers (while they are on job to fulfill a shipment) can be continuously captured as [event data and kept in any kind of datastore](./solution/cold-monitoring/). 
+* an anomaly detection scoring model developed, deployed and monitored using Watson capabilities within [Cloud Pak for Data](./solution/cp4d/). Like any other Cloud Pak, Cloud Pak for Data can also run in any Cloud infrastructure - IBM Cloud, Azure, Google or Amazon or even in On Premise infrastructure.
+
+The telemetry can be used to build a AI model to continuously check if any irregularity happening in the Containers while in move (which can in turn spoil the Vaccines).
+
+Once we have detected the anomaly, a process is triggered in conjunction with blockchain Ledger to remove the bad batch of vaccines from the supply chain. The maintenance business process uses IBM cloud pak for automation. 
+
+The blockchain component is key, in this solution, to ensure continuous transparency between the different business partners involved in this end to end manufacturing and delivery of the vaccine lots.  By this time many counterfeit vaccines exist in the market. The physician at the point of inoculation uses IBM’s Research led innovation - IBM’s Crypto Anchor Verifier. After scanning the vaccine, the Verifier records its unique wavelength and microscopic details on the blockchain; verifying its authenticity against the original digital fingerprint captured at source; all in a matter of sub seconds.
 
 ### How to start this innovative journey
 
@@ -124,12 +163,12 @@ The predictive scoring service to detect reefer container anomaly is developed u
 
 ### End to end traceability and trustability
 
-
 Traceability is key to avoid fraud, and ensure quality of the end to end delivery. As the vaccine vials travel by air and then shipping companies with last mile contactless delivery enabled via drones; the blockchain ledger is used to ensure continuous transparency.  By this time many counterfeit vaccines exist in the market. The physician at the point of inoculation uses IBM’s Research led innovation - IBM’s Crypto Anchor Verifier. After scanning the vaccine, the Verifier records its unique wavelength and microscopic details on the blockchain; verifying its authenticity against the original digital fingerprint captured at source; all in a matter of sub seconds.
 
 The vaccine developer, the heathcare agency in the importing country, the physician inoculating the vaccine and the citizen receiving the vaccine are all rest assured on the authenticity of the vaccine and the vaccine developer moves to solve bigger problems through science and innovation.
 
 #### The how 
+
 So the core solution needs to adopt [Blockchain hyperledger](https://www.ibm.com/blockchain) to track the life cycle of the vaccine lots: lot manufacturing events, cold chain violation events, and shipment events are logged into the hyperledger.
 
 ### Fix reefer anomaly

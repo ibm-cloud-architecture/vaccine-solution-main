@@ -1,11 +1,11 @@
 module.exports = {
   siteMetadata: {
     title: 'IBM Garage: A Cloud Pak Show Case',
-    description: 'This project represents an integrated solution to deliver Vaccine WW at billions of lots.',
+    description: 'This project represents an integrated solution to deliver Vaccine WW at billions of lot.',
     keywords: 'gatsby,theme,carbon',
     author: 'IBM Garage Solution Engineering'
   },
-  pathPrefix: '/vaccine-solution-main',
+  pathPrefix: '/vaccine-cold-chain/vaccine-cold-chain-main/',
   plugins: [
     {
       resolve: 'gatsby-theme-carbon',
@@ -13,7 +13,7 @@ module.exports = {
         isSearchEnabled: true,
         titleType: 'append',
         repository: {
-          baseUrl: 'https://github.com/ibm-cloud-architecture/vaccine-solution-main',
+          baseUrl: 'https://github.ibm.com/vaccine-cold-chain/vaccine-cold-chain-main',
           subDirectory: '/docs',
           branch: 'master'
         }

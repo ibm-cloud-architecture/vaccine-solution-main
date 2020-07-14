@@ -2,7 +2,7 @@
 
 This project presents an approach to develop a vaccine cold chain monitoring with anomaly detection.
 
-The content of this repository is presented [in a BOOK view](https://pages.github.ibm.com/vaccine-cold-chain/vaccine-cold-chain-main/), and the goal is to run all those components together on multi cloud environments.
+The content of this repository is presented [in a BOOK view](https://ibm-cloud-architecture/vaccine-solution-main/), and the goal is to run all those components together on multi cloud environments.
 
 ## Building this booklet locally
 

@@ -16,7 +16,7 @@
       path: /design/cp4a-sol-builder/
     - title: Vaccine Order & Reefer Optimization
       path: /design/voro/
-    - title: Collect data
+    - title: Anomaly detection with CP for Data
       path: /solution/cp4d/
     - title: Define the anomaly detection scoring model with Watson Studio
       path: /analyze/ws-ml-dev
