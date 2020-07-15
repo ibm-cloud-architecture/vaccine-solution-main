@@ -17,7 +17,7 @@ As the world awaits the release of the COVID-19 vaccines; we’ve learnt four th
 
 Exiting the clinical trial phase; the challenge ahead for vaccine manufacturers along with their manufacturing partners lies in effectively delivering the billion vaccines to the most needed areas of the world under uncertain conditions, constrained supplies for vaccine vials, refrigerator container for transportation and fragmented supply chains. 
 
- ![2](./images/biz-arch.png)
+ ![1](./images/biz-arch.png)
 
 ## Executive Overview
 
@@ -51,7 +51,7 @@ design thinking, even storming, microservices, small team, devops, MLops...
 
 The high level vaccine manufacturing process is presented in the figure below.
 
-![1](./images/ifma-process.png)
+![2](./images/ifma-process.png)
 
 The important points we want to consider in this Minimum Viable Solution are:
 
@@ -66,7 +66,7 @@ IBM research, MIT Data Science Lab and pharmaceutical companies use machine lear
 
 The diagram below is a minimum viable product solution design
 
- ![3](./design/images/vaccine-comp-view.png)
+ ![3](./design/images/mvp-vaccine-comp-view.png)
 
 We will now highlight features and functions of the solution:
 
@@ -81,14 +81,18 @@ A vaccine typically travels through multiple sites before being ready for shipme
 
 As the shipment of vaccines is underway, cold chain monitoring service monitors the performance of the cold chain in real time. This is supported by two components: 
 
-* a real time stateful operator connected to the event streams coming as reefer telemetries: The refrigerated containers, those would be used to ship the Vaccines to the Medical facilities, need monitoring. That is to ensure that all sensors within the containers are working properly so that its internal control system maintains  the necessary temperature and the concentration of cryogenic fluids. Otherwise the Vaccines would be spoiled and cannot be used for the treatment of patients. The data of various sensors from the containers (while they are on job to fulfill a shipment) can be continuously captured as [event data and kept in any kind of datastore](./solution/cold-monitoring/). 
+* A real time stateful operator connected to the event streams coming as reefer telemetries: The refrigerated containers, those would be used to ship the Vaccines to the Medical facilities, need monitoring. That is to ensure that all sensors within the containers are working properly so that its internal control system maintains  the necessary temperature and the concentration of cryogenic fluids. Otherwise the Vaccines would be spoiled and cannot be used for the treatment of patients. The data of various sensors from the containers (while they are on job to fulfill a shipment) can be continuously captured as [event data and kept in any kind of datastore](./solution/cold-monitoring/). 
 * an anomaly detection scoring model developed, deployed and monitored using Watson capabilities within [Cloud Pak for Data](./solution/cp4d/). Like any other Cloud Pak, Cloud Pak for Data can also run in any Cloud infrastructure - IBM Cloud, Azure, Google or Amazon or even in On Premise infrastructure.
 
 The telemetry can be used to build a AI model to continuously check if any irregularity happening in the Containers while in move (which can in turn spoil the Vaccines).
 
 Once we have detected the anomaly, a process is triggered in conjunction with blockchain Ledger to remove the bad batch of vaccines from the supply chain. The maintenance business process uses IBM cloud pak for automation. 
 
-The blockchain component is key, in this solution, to ensure continuous transparency between the different business partners involved in this end to end manufacturing and delivery of the vaccine lots.  By this time many counterfeit vaccines exist in the market. The physician at the point of inoculation uses IBM’s Research led innovation - IBM’s Crypto Anchor Verifier. After scanning the vaccine, the Verifier records its unique wavelength and microscopic details on the blockchain; verifying its authenticity against the original digital fingerprint captured at source; all in a matter of sub seconds.
+The blockchain component is key, in this solution, to ensure continuous transparency between the different business partners involved in this end to end manufacturing and delivery of the vaccine lots.  By this time many counterfeit vaccines exist in the market. Here is a small video  to present of an existing cold chain process with blockchain.
+    
+ [![4](./images/blockchain-cold-chain.png)](https://www.youtube.com/watch?v=-3FuWI9hTgc)
+
+The physician at the point of inoculation uses IBM’s Research led innovation - IBM’s Crypto Anchor Verifier. After scanning the vaccine, the Verifier records its unique wavelength and microscopic details on the blockchain; verifying its authenticity against the original digital fingerprint captured at source; all in a matter of sub seconds.
 
 ### How to start this innovative journey
 
@@ -191,4 +195,4 @@ The solution is secured across multi-cloud targets federating queries across the
 
 ## Final Warming
 
-<InlineNotification kind="warning">The implemented code does not represent any best practices in term of software development and production delivery. Consider to be a "hello world ++" for most of the components. Those components are exposing basic REST end points and a simple data model to support the main concepts of the business problem with adhoc persistence layer.</InlineNotification>
+<InlineNotification kind="warning">The solution is complex to implement, and IBM is working with different industr partners to propose an open solution. We do not pretent the solution to be real implementation, it is more a demonstration of some principles and product capabilities. The implemented code does not represent any best practices in term of software development and production delivery. Consider to be a "hello world ++" for most of the components. Those components are exposing basic REST end points and a simple data model to support the main concepts of the business problem with adhoc persistence layer.</InlineNotification>

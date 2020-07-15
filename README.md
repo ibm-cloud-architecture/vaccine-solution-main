@@ -16,11 +16,10 @@ The navigation is in the `docs/src/data` folder file `nav-items.yaml`.
 
 The content is in the `docs/src/pages` folder. Then the folders content the following:
 
-* index.md is the first main page
+* `index.md` is the first main page
 * design folder includes the articles related to the design of the solution
 * solution folder includes simple description of each service of the solution
-* mcm is for content around multicloud management
-* devops is to include articles on CI and CD.
+* mcm is for content around multi-cloud management
+* DevOps is to include articles on CI and CD.
 * analyze is for the Watson ML work.
-* The diagrams are in a ppt file named: `docs/VaccinTransportation-Usecases.pptx`. Use snapit to build a png file from one of the diagram. Png files are going to images folder in the corresponding subject area.
-
+* The diagrams are in a ppt file named: `docs/VaccinTransportation-Usecases.pptx`. Use snap-it to build a png file from one of the diagram. Png files are going to images folder in the corresponding subject area.
