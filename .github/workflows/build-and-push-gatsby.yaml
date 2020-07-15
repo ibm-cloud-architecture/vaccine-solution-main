@@ -6,8 +6,7 @@ on:
       - master
     paths:
       - 'docs/**'
-      - '.github/workflows/*.yaml'
-      - '.github/workflows/*.yml'
+      - '.github/workflows/build-and-push-gatsby.yaml'
 
 env:
   WORKDIR: docs
