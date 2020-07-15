@@ -5,4 +5,4 @@ site/
 docs-archive/
 docs/public/
 docs/node_modules/
-docs/.cache/
+docs/.cache/.idea
