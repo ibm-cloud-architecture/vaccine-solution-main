@@ -19,24 +19,24 @@
     - title: Anomaly detection with CP for Data
       path: /solution/cp4d/
     - title: Define the anomaly detection scoring model with Watson Studio
-      path: /analyze/ws-ml-dev
+      path: /analyze/ws-ml-dev/
 - title: Solution Anatomy
   pages:
     - title: Physical Deployment
       path: /solution/environment/
     - title: Order management service
-      path: /solution/orderms/     
+      path: /solution/orderms/
     - title: Vaccine Order & Reefer Optimization
       path: /solution/orderms/voro-solution/
     - title: IoT Simulator
       path: /solution/reefer-iot/
     - title: Cold Chain Monitoring
-      path: /solution/cold-monitoring/   
+      path: /solution/cold-monitoring/
     - title: Blockchain
-      path: /solution/blockchain/  
+      path: /solution/blockchain/
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
-- title: Devops 
+- title: Devops
   pages:
     - title: GitOps and Tekton
       path: /devops/
