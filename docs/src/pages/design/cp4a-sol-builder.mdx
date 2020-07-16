@@ -15,13 +15,17 @@ These processes are coordinated by using a GitOps workflow to help give operatio
 
 Using the Solution Builder tool we can quickly [design](https://www.ibm.com/support/knowledgecenter/en/SSCSJL_4.2.x/techpreview/designing.html) the Vaccine Cold Chain Monitoring solution, including microservices, databases, and Kafka pub/sub. Here is a screen shot of a solution using event based microservices and REST api ones.
 
-![](images/cp4a-sol-builder.png)
+ ![1](images/cp4a-sol-builder.png)
 
 ## Iteration Zero
 
-Once the solution has been designed and GitHub credentials supplied, the Solution Builder will [generate microservices](https://www.ibm.com/support/knowledgecenter/en/SSCSJL_4.2.x/techpreview/generating.html) and GitOps repositories representing the solution inside a Git organization.
+Once the solution has been designed and GitHub credentials supplied, 
 
-![](images/cp4a-sol-builder-2.png)
+ ![2](images/cp4a-sol-builder-0.png)
+
+the Solution Builder will [generate microservices](https://www.ibm.com/support/knowledgecenter/en/SSCSJL_4.2.x/techpreview/generating.html) and GitOps repositories representing the solution inside a Git organization.
+
+ ![3](images/cp4a-sol-builder-2.png)
 
 ## Develop and Deploy
 
@@ -31,7 +35,7 @@ Once the Git repositories have been generated, they are ready for developers to 
 
 Solution Builder has accelerated the development of the complete cloud native solution. A process which previously may have taken days has been achieved in just a few minutes.
 
-One GitHub repository is created for every microservice in your application design and pre-populated with the chosen runtime application stack and templates. Each repository contains an `app-deploy.yaml` file, which is the configuration file that is used by the Appsody Operator to deploy a project.
+One GitHub repository is created for every microservice in your solution, pre-populated with the chosen runtime application stack and templates. Each repository contains an `app-deploy.yaml` file, which is the configuration file that is used by the Appsody Operator to deploy a project.
 
 One or more GitOps repositories are also set up by the Accelerator, depending on the properties you configured on the canvas. Each GitOps repository describes the desired state of a deployment environment, which allows you to define development, staging, or production environments for your application.
 

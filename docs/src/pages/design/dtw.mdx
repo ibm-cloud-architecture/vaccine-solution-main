@@ -41,10 +41,19 @@ The following three personas were identified:
 
 ## Pain points
 
+The following figure illustrates potential pain points discovered during the design thinking workshop:
+
  ![d4](./images/dtw-pain-points.png)
 
 ## Vision statement
 
+The team arrives to some vision for two personas:
+
+  ![d5](./images/dtw-vision.png)
+
+<InlineNotification kind="warning">
+    It is important to note in the context of this simple exercise, we did not document a full blend design thinking workshop and all the artifacts we develop during such real workshop. The current diagrams illustrate just enough content to give you context for the implementation of the solution.
+</InlineNotification>
 
 ## Event Storming applied
 
@@ -71,58 +80,63 @@ The first three figures below, represent the start of this business process:
 
 * Process start, with raw material and bulk antigen steps
 
- ![](./images/es-bp1.png)
+ ![e1](./images/es-bp1.png)
 
 * formulation and filling
 
- ![](./images/es-bp2.png)
+ ![e2](./images/es-bp2.png)
 
-* Vaccine packaging and lot release:
+* Vaccine packaging and lot release and order intiation:
 
- ![](./images/es-bp3.png)
+ ![e3](./images/es-bp3.png)
 
 While the last part of the process, shipment and cold chain monitoring, is addressing the the lot delivery up to the target hospital or medical institution: 
 
- ![](./images/es-bp4.png)
+ ![e4](./images/es-bp4.png)
 
-Adding blue lines to separate transition between entities help to define the different domains of the process. In the packaging and lot release we can see the following sub-domains:
+Adding blue lines to separate transition between teams or organizartions, help to define the different domains of the process. In the packaging and lot release we can see the following sub-domains:
 
 * The vaccine manufacturing domain
 * The Order management domain
-* The opportunity management domain
 * The regulatory domain
+* Reefer monitoring domain
+
+ ![e5](./images/es-domains.png)
 
 While for the shipment we have:
 
-* The transportation logitic
-* The order management
-* The cold chain monitoring and anomaly detection 
-* The refrigerato container maintenance
+* The transportation logistic domain, airplane and truck being different domains
+* The order management domain
+* The cold chain monitoring and anomaly detection domain
+* The refrigerator container maintenance
 
-For the minimum viable product we will support part of the lot release and shipment steps.
+For the minimum viable product we will support part of the order and cold chain monitoring.
 
 For the discovered events, we follow the methodology by adding commands, actors and business entities for the lot release and cold chain monitoring domains.
 
-### Lot release analysis
+## Adding commands, actors, entities
+
+### Order domain
 
 The blue stickers represent commands, which may be mapped to API verb, or batch job, or user interface widget...
 
 The Yellow stickers are for actors.
 
-![](./images/es-lot-release.png)
+ ![b1](./images/es-order.png)
 
 The green stickers represent data, or business entities.
 
-### Order management
+### Reefer domain
 
- ![](./images/es-order.png)
+ ![b2](./images/es-reefer.png)
 
+### Cold chain monitoring sub domain
 
-### Cold chain monitoring
-
-![](./images/es-cold-chain.png)
+ ![b3](./images/es-cold-chain.png)
 
 
 ## Supporting material
 
+* [Introduction to Design Thinking]()
+* [Event storming quick video]()
 * [Introduction to Mural - Video](https://support.mural.co/en/articles/2113687-introduction-to-mural-live-demo)
