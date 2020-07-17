@@ -8,7 +8,7 @@ title System Context Vaccine Manufacturing Solution
 Person(ManufacturerMgr,"Manufacturer Mgr")
 Person(ManufacturerQA,"Manufacturer QA")
 Person(ReeferOperator,"Reefer Operator")
-
+Person(VaccineCoordinator,Staff,"Vaccine Operator")
 System(vms,"Vaccine Manufacturing Solution")
 System_Ext(email,"Email Server","Exchange e-mail system")
 System_Ext(flightTracking,"Flight Tracking", "Web service tracking flight tracking")
