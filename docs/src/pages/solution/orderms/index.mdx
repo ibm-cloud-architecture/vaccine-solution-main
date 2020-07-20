@@ -23,7 +23,7 @@ The component writes to a database (DB2) all the order received, but also produc
 
 The service is created from an [Appsody](https://appsody.dev/) stack and packaged as docker images, deployed on Openshift. The Event backbone is IBM Event Streams deliver as part of cloud pack for integration and installed via operator. This [video on the last event streams release](https://www.youtube.com/watch?v=nSza-RwvxSE) presents the installation process and the new capabilities.
 
-**Github repository:** [Vaccine-order-mgr](https://github.ibm.com/vaccine-cold-chain/vaccine-order-mgr)
+**Github repository:** [Vaccine-order-mgr](https://github.com/ibm-cloud-architecture/vaccine-order-mgr)
 
 **Order Life Cycle**
 
@@ -70,18 +70,34 @@ This microservice is built using the [Appsody](https://appsody.dev/) development
 
 Appsody will build the application by pulling the contents of the Quarkus Appsody Stack it is based on and then performs the local application build inside the containerized environment:
 
-`appsody build -t vaccine-cold-chain/vaccine-order-mgr:0.0.1 [--push]`
+```shell
+# if not logged yes to your openshift cluster where the docker private registry resides do:
+oc login --token=... --server=https://c...
+# Get the route to reach the docker private registry
+oc get route --all-namespaces | grep registry
+# Define the path as environment variable
+export IMAGE_REGISTRY=default-route-openshift-image-registry.gse-eda-demo-202005-fa9ee67c9ab6a7791435450358e564cc-0000.us-south.containers.appdomain.cloud
+# log to the docker registry using the security token from the openshift console
+docker login $IMAGE_REGISTRY
+# Then build and push the image
+appsody build -t ibmcase/vaccine-order-mgr:0.0.1 [--push-url $IMAGE_REGISTRY] [--push]
 
-- You can optionally specify a container tag (0.0.1). If left blank, `latest` will be used.
-- You can optionally supply the `--push` flag to automatically push the built image to specified remote repository.
+# IF you use dockerhub
+appsody build -t ibmcase/vaccine-order-mgr:0.0.1 --push --push-url docker.io
+```
+
+- You can optionally specify a container tag. If left blank, `latest` will be used.
+- You can optionally supply the `--push` flag to automatically push the built image to specified remote repository `--push-url`.
 
 Performing an Appsody build will update the `app-deploy.yaml` file in the same directory with current information for the application image, labels, and annotations fields.
+
+This file needs to be updated to include the different environment variables needed by the application:
 
 ## Run
 
 ### Pre requisites
 
-The orders are persisted in an external DB2 instance running on IBM Cloud Pack. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
+The orders are persisted in an external DB2 instance running on IBM Cloud Pack for Data. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
 
 ### Deployment Parameters
 
@@ -98,11 +114,12 @@ The following deployment parameters are defined in the `app-deploy.yaml` file:
 | DBPWD | YES | Database user password |
 | SSLJDBCURL | YES | JDBC URL to connect to the database | 
 
-You can define a `setenv.sh` script to export the environment variables. The `scripts` folder has a template for this file with the environment variables needed to run locally.
+You can define a `.env` script to export the environment variables. 
 
 ### Run Locally
 
-When running the microservice locally you must specify all the required [deployment parameters](#deployment-parameters) from above as environment variables. When using `appsody run` use the `--docker-options` flag being passed in from the Appsody CLI command. If you use `./mvnw quarkus:dev` be sure to have exported the environment variable.
+When running the microservice locally you must specify all the required [deployment parameters](#deployment-parameters) environment variables. When using `appsody run` use the `--docker-options` flag being passed in from the Appsody CLI command. 
+Two options to start locally, one with quarkus, the other one with appsody
 
 **With Quarkus:**
 
