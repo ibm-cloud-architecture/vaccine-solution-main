@@ -28,7 +28,7 @@
       path: /solution/orderms/
     - title: Vaccine Order & Reefer Optimization
       path: /solution/orderms/voro-solution/
-    - title: IoT Simulator
+    - title: Reefer IoT Simulator
       path: /solution/reefer-iot/
     - title: Cold Chain Monitoring
       path: /solution/cold-monitoring/

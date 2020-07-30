@@ -117,7 +117,7 @@ app.register_blueprint(control_blueprint)
 
 To define the API, we use [Flasgger](https://github.com/flasgger/flasgger) as an extension to Flask to extract [Open API specification](https://swagger.io/docs/specification/about/) from the code. It comes with Swagger UI, so we can see the API documentation of the microservice at the URL `/apidocs`.  It can also validate the data according to the schema defined.
 
-For the POST `/control` we defined the Swagger 2.0 API in a separate file: `api/controlapi.yml` and import it at the method level to support the POST operation. This method is defined in its blueprint as a REST resource. The code [controller.py](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator/blob/master/simulator/api/controller.py) is under `api` folder.
+For the POST `/control` we defined the Swagger 2.0 API in a separate file: `api/controlapi.yml` and import it at the method level to support the POST operation. This method is defined in its blueprint as a REST resource. The code [controller.py](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator/blob/master/simulator/api/controller.py) is under `api` folder.
 
 Below is a code extract to illustrate the use of Flask-RESTful and blueprint and the swagger annotation:
 
@@ -135,28 +135,10 @@ class SimulationController(Resource):
 api.add_resource(SimulationController, "/control")
 ```
 
-The [Pipfile](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator/blob/master/Pipfile) defines the dependencies for this component, and is used by `pipenv` during the automatic build process within `appsody build`.
-
-To launch the web application in development mode, using an IBM Event Streams instance, use the following commands:
-
-```shell
-# set environment variables - from simulator folder
-$ source ../scripts/setenv.sh 
-# Run the app with a local kafka broker started with docker compose
-$ appsody run --network kafkanet --docker-options="-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$KAFKA_APIKEY -e KAFKA_CERT=$KAFKA_CERT -e KAFKA_MAIN_TOPIC=$KAFKA_MAIN_TOPIC"
-# If you run with a remote event streams
-appsody run --docker-options="-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$KAFKA_APIKEY -e KAFKA_CERT=$KAFKA_CERT -e KAFKA_MAIN_TOPIC=$KAFKA_MAIN_TOPIC"
-```
-
-The trace shows the Kafka configuration options:
-
-```shell
-Kafka options are:
-[Container] {'bootstrap.servers': 'eventstream140-ibm-es-proxy-route-broker-0-eventstreams.apps.green.ocp.csplab.local:443', 'group.id': 'ReeferTelemetryProducers', 'security.protocol': 'SASL_SSL', 'sasl.mechanisms': 'PLAIN', 'sasl.username': 'token', 'sasl.password': 'xCByo4478xQH...EVdcbGNCtLLuItKgVDc', 'ssl.ca.location': '/project/userapp/certs/es-cert.pem'}
-```
+The [Pipfile](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator/blob/master/Pipfile) defines the dependencies for this component, and is used by `pipenv` during the automatic build process within `appsody build`.
 
 
-**Github repository:** [reeferiotsimulator](https://github.ibm.com/vaccine-cold-chain/reeferiotsimulator)
+**Github repository:** [vaccine-reefer-simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
 
 **Kafka topics produced to:** telemetries
 
@@ -197,11 +179,68 @@ This microservice is built using the Appsody development framework. The Appsody 
 
 Appsody will build the application by pulling the contents of the Appsody Stack it is based on and then performing the local application build inside the containerized environment:
 
-`appsody build -t ibmcase/vcc-reefersimulator:1.0.0 --push`
+`appsody build -t ibmcase/vaccine-reefer-simulator:v1.0.0 --push`
 
 You can optionally specify a container tag. If left blank, latest will be used.
 You can optionally supply the --push flag to automatically push the built image to specified remote repository.
 Performing an Appsody build will update the `app-deploy.yaml` file in the same directory with current information for the application image, labels, and annotations fields.
+
+## Run
+
+To launch the web application in development mode, using a local kafka cluster based on Strimzi image 2.5, use the following commands:
+
+```shell
+docker-compose up &
+# set environment variables - from simulator folder
+export KAFKA_BROKERS=kafka:9092
+# Run the app with a local kafka broker started with docker compose
+$ appsody run --network kafkanet --docker-options="-e KAFKA_BROKERS=$KAFKA_BROKERS"
+```
+
+### Run locally with remote Event Streams on OCP
+
+If you want to remote connect to Event Streams on OpenShift, you need to get the external URL for the bootstrap end point and the TLS certificate in the form of a .pem file. The following commands can help you do so.
+
+```shell
+# login to OpenShift
+oc login --token=L0.... --server=https://api.eda-solutions.gse-ocp.net:6443
+# Access to the project where event streams run
+oc project integration
+# Access to Event Streams cluster
+cloudctl es init
+# From the result get the bootstrap address: some thing like:
+# ...-kafka-bootstrap-integration.apps.....:443 
+# Get the certificate
+cloudctl es certificates --format pem
+mv es-cert.pem certs/
+# Get one of the kafka user defined with the scram-sha-512 authentication
+oc get kafkausers -n integration
+# For example here is an output: 
+# NAME      AUTHENTICATION   AUTHORIZATION
+# my-user1  scram-sha-512    simple
+```
+
+Set the following environment variables:
+
+```shell
+export KAFKA_BROKERS=...-kafka-bootstrap-integration.apps.....:443 
+export KAFKA_USER=my-user1
+export KAFKA_PWD=$(oc -n integration get secret my-user1 -o jsonpath='{.data.password}'  | base64 --decode)
+```
+
+Then start the app (the previous steps has to be done only for the first run):
+
+```shell
+appsody run --docker-options "-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_USER=$KAFKA_USER -e KAFKA_PWD=$KAFKA_PWD -v $(pwd)/certs/es-cert.pem:/certs"
+```
+
+The trace shows the Kafka configuration options:
+
+```shell
+Kafka options are:
+[Container] {'bootstrap.servers': '....:443', 'group.id': 'ReeferTelemetryProducers', 'security.protocol': 'SASL_SSL', 'sasl.mechanisms': 'SRAM-SHA-512', 'sasl.username': 'my-user1', 'sasl.password': 'xC..VDc', 'ssl.ca.location': '/certs/es-cert.pem'}
+```
+
 
 ### Testing
 
@@ -210,7 +249,7 @@ Performing an Appsody build will update the `app-deploy.yaml` file in the same d
 The test coverage for this project is not great yet. To run the test use `appsody test`.
 
 ```shell
-cd reeferiotsimulator/scripts
+cd ./scripts
 ./startPythonEnv.sh
 root@1de81b16f940:/# export PYTHONPATH=/home/reeferiotsimulator
 root@1de81b16f940:/# cd /home/reeferiotsimulator
@@ -219,53 +258,32 @@ root@1de81b16f940:/# python test/unit/TestSimulator.py
 
 #### Functional testing
 
+To be able to run locally, you need a Kafka simple cluster. We have defined a docker compose for that, see [previous section](#run).
+
 Use the web browser or a Postman to go to the URL: [http://localhost:8080/control](http://localhost:8080/control) and do a POST. Here is an image of the open API UI:
 
 ![](images/simulapp-control-openapi.png)
 
-## Run
 
 ###  Deployment
 
-1. There are three required configuration elements for connectivity to IBM Event Streams (Kafka) prior to deploy this app:
+1. There are a set of required configuration elements for connectivity to IBM Event Streams (Kafka) prior to deploy this app:
 
-    * A `ConfigMap` named `kafka-brokers` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-kafka-brokers_1)**
-    * A `Secret` named `eventstreams-api-key` **[Reference Link](https://ibm-cloud-architecture.github.io/refarch-kc/deployments/backing-services/#event-streams-api-key_1)**
+    * A `ConfigMap` named `reefer-simul-cmap`, that you deploy with `oc apply -f config/configmap.yaml`
+    * A user and user secret. If you have a defined a user in the Event Streams console name `kafka-user` with SRAM credentials, then we need to copy the secret in the name space where the service will run. For that do the following command: 
+      ```
+      oc get secret kafka-user -n integration -o yaml | oc apply -f -
+      ```
+    * A `Secret` named `eventstreams-pem` for the pem file content.
+
+      ```
+      oc create secret generic eventstreams-pem --from-file=certs/es-cert.pem
+      ```
 
 1. Once those elements are defined it is important to configure the app so it can retrieve those information via environment variables. With Appsody the file `appsody-config.yaml` is supporting these configurations. 
 
-```
-  - name: KAFKA_BROKERS
-    valueFrom:
-      configMapKeyRef:
-        key: brokers
-        name: kafka-brokers
-  - name: KAFKA_APIKEY
-    valueFrom:
-      secretKeyRef:
-        key: binding
-        name: eventstreams-apikey
-```
+  [See app-deploy.yaml](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator/blob/master/app-deploy.yaml)
 
-When using TLS connection, the TLS certificate is mounted inside the container via mounted file system. Inside the container the directory will be `/certs` and the volume is in fact a Secret containing the pem certificate as string.
-
-```yaml
-volumeMounts:
-  - mountPath: /certs
-    name: eventstreams-cert-pem
-  volumes:
-  - name: eventstreams-cert-pem
-    secret:
-      optional: true
-      secretName: eventstreams-cert-pem
-```
-
-### Build
-
-The Docker image can be built from this directory by using the `appsody build` command:
-
-1. Ensure you are logged in to the desired remote Docker registry through your local Docker client.
-2. The `appsody build -t ibmcase/vcc-reeferiotsimulator:v1.0.0 --push` command will build and push the application's Docker image to the specified remote image registry (here this is the public docker hub repository).
 
 ### Application deployment
 
@@ -276,13 +294,14 @@ The application can be deployed to a remote OpenShift cluster by using the `apps
 ```shell
 # login to the openshift cluster if not done already
 oc login --token=rR.... --server=....
-# Deploy to the eda-sandbox project
-appsody deploy -t ibmcase/vcc-reeferiotsimulator:v1.00 --push --namespace --no-build vaccine-cold-chain
+# Deploy to the vaccine solution project
+appsody deploy -t ibmcase/vcc-reeferiotsimulator:v1.0.0 --push --namespace vaccine-solution
 ```
 
 You can verify the deployment with the CLI
-```
-oc get pods
+
+```shell
+oc get pods -w
 ```
 
 or the via the Openshift console:

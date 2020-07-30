@@ -14,6 +14,38 @@ The data governance is controlled by the cloud pak for data product portfolio, a
 
 Finally the multi cloud management platform ensures the deployment of the products and the solutions on multi cloud providers. 
 
+## Pre-requisites
+
+### Work using Cloud Shell
+
+You are going to use IBM Cloud Shell with all the tools required to support the deployment of the solution.
+* Start your IBM Cloud Shell by pointing your browser to <https://cloud.ibm.com/shell>
+
+ ![shell](./images/shell-v10.png)
+
+* Download the IBM Cloud Pak CLI - `curl -L https://github.com/IBM/cloud-pak-cli/releases/latest/download/cloudctl-linux-amd64.tar.gz -o cloudctl-linux-amd64.tar.gz`
+* Untar it - `tar -xvf cloudctl-linux-amd64.tar.gz`
+* Rename it for ease of use - `mv cloudctl-linux-amd64 cloudctl`
+* Include it to the PATH environment variable - `export PATH=$PATH:$PWD`
+* Make sure your IBM Cloud Pak CLI is in the path- `which cloudctl`
+* Make sure your IBM Cloud Pak CLI works - `cloudctl help`
+
+ ![shell2](./images/shell2-v10.png)
+
+* Download the Event Streams plugin for IBM Cloud Pak CLI - `curl -L http://ibm.biz/es-cli-linux -o es-plugin`
+* Install it - `cloudctl plugin install es-plugin`
+* Make sure it works - `cloudctl es help`
+
+ ![shell3](./images/shell3-v10.png)
+
+#### Git
+
+IBM Cloud Shell comes with Git already installed out of the box.
+
+#### Vi
+
+IBM Cloud Shell comes with Vi already installed out of the box.
+
 ## Development accelerator tools
 
 Cloud Pak for Application is used to support the development process. Starting from the Solution Builder to defined each component of the solution. The Cloud Pak for application installation instructions follow [the product documentation](https://www.ibm.com/support/knowledgecenter/en/SSCSJL_4.2.x/install-icpa.html)
