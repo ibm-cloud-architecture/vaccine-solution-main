@@ -4,6 +4,11 @@ This project presents an approach to develop a vaccine cold chain monitoring wit
 
 The content of this repository is presented [in a BOOK view](https://ibm-cloud-architecture.github.io/vaccine-solution-main/), and the goal is to run all those components together on multi cloud environments.
 
+## The solution repositories
+
+* [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr): Expose API to manage vaccine order. Based on Appsody Quarkus stack with reactive programming implementation. Consume messages on the orders topic.
+* [Reefer IoT simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator): A python service to simulate sending sensor telemetries to Kafka, with exposed API to control the simulation and the demonstration for anomaly detection and cold chain temperature monitoring. 
+
 ## Building this booklet locally
 
 The content of this repository is written with markdown files, built with Gatsby. For more information, see the [README for the docs](https://github.com/ibm-cloud-architecture/refarch-kc/blob/master/docs/README.md).
