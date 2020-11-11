@@ -34,10 +34,12 @@
       path: /solution/blockchain/
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
--title: Use cases
- pages:
+- title: Use cases
+  pages:
     - title: Order Optimization
-    - path: /use-cases/order/
+      path: /use-cases/order/
+    - title: Cold Chain Monitoring
+      path: /use-cases/cold-chain/
 - title: Devops
   pages:
     - title: GitOps and Tekton
