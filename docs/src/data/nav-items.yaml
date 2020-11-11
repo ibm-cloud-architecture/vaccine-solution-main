@@ -12,8 +12,6 @@
       path: /design/syst-ctx/
     - title: Component View
       path: /design/comp-view/
-    - title: Solution Builder (CP4App)
-      path: /design/cp4a-sol-builder/
     - title: Vaccine Order & Reefer Optimization
       path: /design/voro/
     - title: Anomaly detection with CP for Data
@@ -36,6 +34,10 @@
       path: /solution/blockchain/
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
+-title: Use cases
+ pages:
+    - title: Order Optimization
+    - path: /use-cases/order/
 - title: Devops
   pages:
     - title: GitOps and Tekton

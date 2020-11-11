@@ -1,0 +1,38 @@
+---
+title: Order management and optimization demo
+description: Order management and optimization demonstration
+--- 
+
+This note let you run the order management code with a simple scenario that addresses the following features:
+
+* Create Order with a User interface
+* Validate the [outbox pattern]() works to get OrderCreated, OrderUpdated or OrderCancelled Events to Kafka
+* Validate the blockchain has a record for the newly created order
+* Integrate with the Shipment plan optimization
+
+## Components involved in this demonstration
+
+* Order Service
+* Debezium for change data capture on the outbox table
+* Kafka 
+* Order Optimization Service
+
+## Scenario script
+
+Once the solution is up and running in your target deployment environment (local or OpenShift) execute the following steps to present an end to end demonstration.
+
+### Validate existing vaccine lot shipment plan
+
+### Create an order from the user interface of the Order Service. 
+
+### See how the shipment plan is modified
+
+### Validate the blockchain records
+
+### Present the events created
+
+## Run locally
+
+As a lightweight approach you can run the solution with docker compose. For that the configuration, test data and 
+
+## Run on OpenShift 
