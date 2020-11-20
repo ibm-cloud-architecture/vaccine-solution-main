@@ -9,19 +9,29 @@ This microservice manages vaccine order for a world wide demand and distribution
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
   <AnchorLink>Build</AnchorLink>
-  <AnchorLink>Run</AnchorLink>
+  <AnchorLink>Run Locally</AnchorLink>
+  <AnchorLink>Deploy to OpenShift</AnchorLink>
   <AnchorLink>Usage Details</AnchorLink>
 </AnchorLinks>
 
 ## Overview
 
-This project implements a very simple event driven microservice to support the Create, Read, Update, and Delete of vaccine orders. The sale representative uses his mobile device to enter information about an order for a countries or a county within a country. 
+This project implements a very simple event driven microservice to support the Create, Read, Update, of vaccine orders. This implementation highlights the following capbilities / patterns:
+
+* Quarkus reactive microservice using Microprofile 3.x - reactive messaging extension 
+* DB2 with Hibernate ORM with Quarkus Panache
+* Quarkus Debezium Outbox pattern to get OrderEvents table and change data capture with Debezium.
+
+In term of business scenario, a sale representative uses his mobile device to enter information about a vaccine order to be shipped to a given countries or a province within a country. 
+
+ ![](./images/order-ui.png)
+
+The user interface is for demonstration purpose but illustrate some standard Vuejs development practices. 
 
  ![](./images/vaccine-order-1.png)
 
-The component writes to a database (DB2) all the order received, but also produce records to Blockchains and once the order is ready calls the Vaccine Order & Reefer Optimization service to get an updated schedule of vaccine lots to ship by airplane. At each order's state modification, events are sent to an event backbone.
 
-The service is created from an [Appsody](https://appsody.dev/) stack and packaged as docker images, deployed on Openshift. The Event backbone is IBM Event Streams deliver as part of cloud pack for integration and installed via operator. This [video on the last event streams release](https://www.youtube.com/watch?v=nSza-RwvxSE) presents the installation process and the new capabilities.
+The component writes to the database (DB2) all the orders received, but also produce records to Kafka via the Outbox pattern and change data capture.
 
 **Github repository:** [Vaccine-order-mgr](https://github.com/ibm-cloud-architecture/vaccine-order-mgr)
 
@@ -33,21 +43,6 @@ The order follows a set of states as described in the following diagram:
 
 **Kafka topics produced to:**
 
-The service produces to `orders` topic. Below is a representation of a Strimzi topic definition:
-
-```yaml
-apiVersion: eventstreams.ibm.com/v1beta1
-kind: KafkaTopic
-metadata:
-  name: orders
-  namespace: cp4i
-spec:
-  partitions: 3
-  replicas: 3
-  config:
-    retention.ms: 7200000
-    segment.bytes: 1073741824
-```
 
 **Events produced:**
 
@@ -55,8 +50,6 @@ We will simplify the process and aggregate in the following event types:
 
 * orderCreated
 * orderUpdated
-* orderCancelled
-* orderClosed
 
 Some events are related to the vaccine lot
 
@@ -66,38 +59,59 @@ Some events are related to the vaccine lot
 
 ## Build
 
-This microservice is built using the [Appsody](https://appsody.dev/) development framework. The [Appsody CLI](https://appsody.dev/docs/installing/installing-appsody) is a required prerequisite for building the application locally.
+This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
 
-Appsody will build the application by pulling the contents of the Quarkus Appsody Stack it is based on and then performs the local application build inside the containerized environment:
+To build and run locally see the repository main readme as we have different docker-compose file to run in demonstration mode or in development mode to add more features to existing code base.
 
-```shell
-# if not logged yes to your openshift cluster where the docker private registry resides do:
-oc login --token=... --server=https://c...
-# Get the route to reach the docker private registry
-oc get route --all-namespaces | grep registry
-# Define the path as environment variable
-export IMAGE_REGISTRY=default-route-openshift-image-registry.gse-eda-demo-202005-fa9ee67c9ab6a7791435450358e564cc-0000.us-south.containers.appdomain.cloud
-# log to the docker registry using the security token from the openshift console
-docker login $IMAGE_REGISTRY
-# Then build and push the image
-appsody build -t ibmcase/vaccine-order-mgr:0.0.1 [--push-url $IMAGE_REGISTRY] [--push]
+In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access DB2, and Kafka. So first thing is to define such secrets.
 
-# IF you use dockerhub
-appsody build -t ibmcase/vaccine-order-mgr:0.0.1 --push --push-url docker.io
-```
-
-- You can optionally specify a container tag. If left blank, `latest` will be used.
-- You can optionally supply the `--push` flag to automatically push the built image to specified remote repository `--push-url`.
-
-Performing an Appsody build will update the `app-deploy.yaml` file in the same directory with current information for the application image, labels, and annotations fields.
-
-This file needs to be updated to include the different environment variables needed by the application:
-
-## Run
+As an example we use a OpenShift project called vaccine_solution created with a command like `oc new-project vaccine_solution`.
 
 ### Pre requisites
 
 The orders are persisted in an external DB2 instance running on IBM Cloud Pack for Data. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
+
+Get an instance of Kafka deployed on OpenShift (Strimzi, [Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). For Event Streams get URL of the bootstrap server and the service credentials (TLS certificates) following [those instructions.](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#getting-tls-authentication-from-event-streams-on-openshift)
+
+### Defining secrets
+
+We need to get IBM DB2 on Cloud credentials as secrets. So from the DB2 service credentials get the following attributes: user, password, and JDBC URL. You need to encrypt each of those values:
+
+```shell
+# Example of URL encryption
+echo "jdbc:db2://dashdb-txn-sbox-....services.dal.bluemix.net:50001/BLUDB:sslConnection=true;" | base64
+```
+
+Then define a secret manifest with a command like:
+
+```shell
+oc apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vaccine-order-db-secret
+data:
+    db.url: ...encrypted URL...
+    db.user: ...encrypted user..
+    db.password: ...encrypted pwd
+EOF
+```
+
+
+```shell
+# if not logged yes to your openshift cluster where the docker private registry resides do:
+oc login --token=... --server=https://c...
+
+# Then build the code using source 2 image and push the image to the internal registry
+mvn package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
+```
+
+It can take some seconds to build and deploy: oc get pods -w lets you see the build pods and the running app once the build is done. As we expose the application an OpenShift route was created. The url is visible at the end of the build output, something like:
+
+...The deployed application can be accessed at: http://quarkus-kstreams-lab3...
+
+## Run
+
 
 ### Deployment Parameters
 
@@ -146,8 +160,7 @@ The `TRUSTSTORE_PATH` parameter is documented in the **Event Streams Certificate
 
 **Example:** `appsody run --docker-options "-v /Users/myuser/Downloads/es-cert.jks:/config/resources/security/es-ssl/es-cert.jks" ...`
 
-### Running on Openshift 
-
+## Deploy to Openshift 
 
 * Define a config map for the kafka brokers URL coming from the Event streams cluster connection panel:
 
@@ -161,7 +174,7 @@ The `TRUSTSTORE_PATH` parameter is documented in the **Event Streams Certificate
 * Define a secret for the event streams API key
 
   ```shell
-  oc create secret generic es-cp4i-apikey --from-literal=binding='b77......tgMJZ' -n vaccine-cold-chain
+  oc create secret generic es-cp4i-apikey --from-literal=binding='b77......tgMJZ' -n vaccine_solution
   ```
 
 * Add a secret for the java truststore, downloaded from Event Stream console or using the CLI `cloudctl es certificates --format jks`

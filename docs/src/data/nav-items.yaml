@@ -20,7 +20,7 @@
       path: /analyze/ws-ml-dev/
 - title: Solution Anatomy
   pages:
-    - title: Physical Deployment
+    - title: Getting Started
       path: /solution/environment/
     - title: Order management service
       path: /solution/orderms/
