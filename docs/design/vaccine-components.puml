@@ -9,7 +9,7 @@ Person(ManufacturerMgr,Staff,"Manufacturer Mgr")
 Person(VaccineCoordinator,Staff,"Vaccine Operator")
 System_Ext(reefer,"Refrigerator Container IoT")
 System_Boundary(vms,"Vaccine_Monitoring_Solution") {
-    Container(app, "Vaccine Order Portal", "Javascript, Angular", "Allows staff to enter shipping order")
+    Container(app, "Vaccine Order Portal", "Javascript, Vuejs", "Allows staff to enter shipping order")
     Container(orderms,"Order management Service","Java", "Microservice to manage order")
     ContainerDb(vaccineDB,"Vaccine DB","DB2","Persist Vaccine data and states")
   

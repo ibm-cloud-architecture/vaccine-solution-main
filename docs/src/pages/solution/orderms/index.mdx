@@ -8,7 +8,7 @@ This microservice manages vaccine order for a world wide demand and distribution
 
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
-  <AnchorLink>Build</AnchorLink>
+  <AnchorLink>Build with s2i</AnchorLink>
   <AnchorLink>Run Locally</AnchorLink>
   <AnchorLink>Deploy to OpenShift</AnchorLink>
   <AnchorLink>Usage Details</AnchorLink>
@@ -57,11 +57,11 @@ Some events are related to the vaccine lot
 * lotLoaded
 * lotDelivered
 
-## Build
+## Build with s2i
 
 This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
 
-To build and run locally see the repository main readme as we have different docker-compose file to run in demonstration mode or in development mode to add more features to existing code base.
+To build and run locally see the [repository main readme](https://github.com/ibm-cloud-architecture/vaccine-order-mgr) as we have different docker-compose files to run in demonstration mode or in development mode.
 
 In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access DB2, and Kafka. So first thing is to define such secrets.
 
@@ -71,9 +71,11 @@ As an example we use a OpenShift project called vaccine_solution created with a 
 
 The orders are persisted in an external DB2 instance running on IBM Cloud Pack for Data. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
 
-Get an instance of Kafka deployed on OpenShift (Strimzi, [Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). For Event Streams get URL of the bootstrap server and the service credentials (TLS certificates) following [those instructions.](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#getting-tls-authentication-from-event-streams-on-openshift)
+Get an instance of Kafka deployed on OpenShift (Strimzi, [Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). 
 
-### Defining secrets
+
+
+### Defining DB access secrets
 
 We need to get IBM DB2 on Cloud credentials as secrets. So from the DB2 service credentials get the following attributes: user, password, and JDBC URL. You need to encrypt each of those values:
 
@@ -97,6 +99,38 @@ data:
 EOF
 ```
 
+### Get Event Streams credentials
+
+For Event Streams get URL of the bootstrap server and the service credentials (TLS certificates) following [those instructions.](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#getting-tls-authentication-from-event-streams-on-openshift)
+
+To summarize what can be done, we assume Event Streams is deployed in `eventstreams` project and the solution is running under `vaccine` namespace.
+
+* If you need to access Event Streams from an application outside of CP4I cluster then create a scram access user. Verify the user is created with `oc get kafkausers -n eventstreams`, and then set the application property for the sasl config:
+
+  ```properties
+  kafka.bootstrap.servers=${KAFKA_BROKERS:kafka:9092}
+  %dev.kafka.security.protocol=SASL_SSL
+  %dev.kafka.sasl.mechanism=SCRAM-SHA-512
+  %dev.kafka.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username\=\"${KAFKA_USER}\" password\=\"${KAFKA_PWD}\";
+  ```
+
+* With remote connection the client application needs the server side public TLS certificate. See [those instructions](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#get-tls-server-public-certificate) to get the Server TLS certificate into the `certs` folder for local run as a secret for deploying to OpenShift. The following command copy the ca cert secret to the current OpenShift project:
+
+ ```shell
+ # Under the 'vaccine' project
+ oc get secret light-es-cluster-ca-cert   -n eventstreams --export -o yaml | oc apply -f -
+ ```
+
+ * Modify the `application.properties` file to define the kafka connection properties as when deployed on the same OpenShift cluster as Event Streams the connection will use TLS credentials
+ 
+ ```properties
+ kafka.ssl.protocol=TLSv1.2
+ kafka.ssl.truststore.location=${KAFKA_CERT_PATH}
+ kafka.ssl.truststore.password=${KAFKA_CERT_PWD}
+ ```
+
+
+### build
 
 ```shell
 # if not logged yes to your openshift cluster where the docker private registry resides do:
@@ -106,7 +140,7 @@ oc login --token=... --server=https://c...
 mvn package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
 ```
 
-It can take some seconds to build and deploy: oc get pods -w lets you see the build pods and the running app once the build is done. As we expose the application an OpenShift route was created. The url is visible at the end of the build output, something like:
+It can take some seconds to build and deploy: `oc get pods -w` lets you see the build pods and the running app once the build is done. As we set properties to expose the application, an OpenShift route was created. The url is visible at the end of the build output, something like:
 
 ...The deployed application can be accessed at: http://quarkus-kstreams-lab3...
 
