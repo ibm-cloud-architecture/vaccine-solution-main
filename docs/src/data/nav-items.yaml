@@ -2,6 +2,10 @@
   pages:
     - title: Overview
       path: /
+    - title: Target Audiences
+      path: /target-audiences
+    - title: Navigation Journeys
+      path: /journey
 - title: Solution Design
   pages:
     - title: Design Thinking and Event Storming
@@ -22,6 +26,8 @@
   pages:
     - title: Getting Started
       path: /solution/environment/
+    - title: Repository map
+      path: /solution/repo-map
     - title: Order management service
       path: /solution/orderms/
     - title: Vaccine Order & Reefer Optimization

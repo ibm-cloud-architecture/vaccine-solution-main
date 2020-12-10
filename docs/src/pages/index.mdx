@@ -5,16 +5,18 @@ description: An innovative vaccine delivery supply chain solution
 
  ![0](./images/vaccine-solution-header.png)
 
-In this simple solution, we invite you on an vaccine’s delivery at scale journey with IBM through the lens of technology and open innovations. Vaccinating Billions of people on the planet requires scale. IBM's platform along with its services provide the capabilities to optimize, analyze and remove the obstacles in the path to deliver authentic vaccines to protect the population of the world from Covid 19.
+In this simple solution, we invite you on an vaccine’s delivery at scale journey with IBM through the lens of technology and open innovations. Vaccinating billions of people on the planet requires scale. IBM's platform along with its services provide the capabilities to optimize, analyze and remove the obstacles in the path to deliver authentic vaccines to protect the population of the world from Covid 19.
+
+This scenario was created end of spring 2020 for a customer but it does not represent a full fledged solution to address this complex problem. The demonstration illustrate how the IBM Garage methodology, combined with different IBM Cloud Pak products are supporting agile development and defining sustainable architecture in an innovative way.
 
 ## Business scenario
 
 As the world awaits the release of the COVID-19 vaccines; we’ve learnt four things about the vaccines themselves:
 
-1.	The vaccine once manufactured needs to be in a stable cold state up until inoculation
+1.	The vaccine once manufactured needs to be in a stable very cold state up until inoculation
 2.	The vaccine travels through various sites across the globe from manufacturing sites to remote clinical trial sites to actual distribution sites to citizens
-3.	The vaccines when ready for release will rise to be the #1 counterfeit product in the world
-4.	There will be a need for Billions of vaccine, so the vaccines will be manufactured in multiple locations 
+3.	The vaccines when ready for release may rise to be the #1 counterfeit product in the world
+4.	There will be a need for billion of vaccines, so the vaccines will be manufactured in multiple locations and delivered world wide
 
 
 Exiting the clinical trial phase; the challenge ahead for vaccine manufacturers along with their manufacturing partners lies in effectively delivering the billion vaccines to the most needed areas of the world under uncertain conditions, constrained supplies for vaccine vials, refrigerator container for transportation and fragmented supply chains. 
@@ -23,9 +25,7 @@ Exiting the clinical trial phase; the challenge ahead for vaccine manufacturers 
 
 ## Executive Overview
 
-The industry is coming together as an open source project under the Linux foundation to ensure that the authenticity of the vaccine is maintained, and a platform is created that is compliant with the industry and is approved by the FDA. The IBM implementation demo of the platform as shown in the diagram above leverages open hybrid cloud capabilities using IBM Red Hat Openshift on a pharmaceutical industry compliant cloud provider. The platform leverages IBM Cloud Paks and brings together advanced analytics and AI capabilities coupled with events processing to rapidly build and deploy cognitive solutions and intelligent workflows for vaccine distribution optimization, faulty container management and detetction, vaccine program success, order management and fraud and crime prevention for getting the vaccines safely in the hands of the doctors and ensuring the authenticity of the vaccine through block chain and removal of bad batch of vaccines through machine learning models and block chain verification.  IBM’s cloud pak are built on top of IBM Red Hat Open Shift.
-
-
+The industry is coming together as an open source project under the Linux foundation to ensure that the authenticity of the vaccine is maintained, and a platform is created that is compliant with the industry and is approved by the different healthcare authorities like the U.S. FDA. The IBM implementation demo of the platform as shown in the diagram above leverages open hybrid cloud capabilities using IBM Red Hat Openshift on a pharmaceutical industry compliant cloud provider. The platform leverages IBM Cloud Paks and brings together advanced analytics and AI capabilities coupled with events processing to rapidly build and deploy cognitive solutions and intelligent workflows for vaccine distribution optimization, faulty container management and detection, vaccine program success, order management and fraud and crime prevention for getting the vaccines safely in the hands of the doctors and ensuring the authenticity of the vaccine through blockchain and removal of bad batch of vaccines through machine learning models and blockchain verification.  IBM’s cloud pak are built on top of IBM Red Hat Open Shift.
 
 In this demo solution we use: 
 
@@ -39,16 +39,15 @@ Variability in events both internally through the business processes and externa
 
 A traditional architecture requires creating new interfaces, integration into systems,  federation and organization of data into a data lake to be ready for any derivation of insights.
 
-Our demonstration today, showcases a developer ready modern architecture comprising of integrated middleware that are used as building blocks to deliver the end to end solution. Use of DevOps tooling and practices accelerates the solution by three factor.
+Our demonstration today, showcases a developer ready modern architecture comprising of integrated middleware that are used as building blocks to deliver the end to end solution. Use of DevOps tooling and practices accelerates the solution by three factors.
 
 ## What we cover
 
-* Speed to innovate and shorten time to deploy to production
-design thinking, even storming, microservices, small team, devops, MLops...
-* Focus end to end solution running in container on Openshift platform on any cloud provider.
-* Using blockchain as multiple business partners are involved, we need to have trusted in data, single source of truth to keep records about the manufactured vaccine lots.
+* Speed to innovate and shorten time to deploy to production using IBM Garage design thinking, even storming, microservices, small team, devops, MLops...
+* Focus end to end solution running in container on OpenShift platform on any cloud providers.
+* Using blockchain as multiple business partners are involved, we need to have trust in data, single source of truth to keep records about the manufactured vaccine lots.
 * How to monitor cold chain for refrigerated vaccine during the packaging and transportation using IoT, events, reactive microservices, rules, predictive scoring and blockchain.
-* How to develop the solution using Java based microprofile apps, with CI/CD practices using Openshift and kubernetes tooling.
+* How to develop the solution using Java based microprofile apps, with CI/CD practices using Openshift and source to image tooling.
 * Scale the solution locally but also at the worldwide level using multi cloud management.
 
 ## The IFMA process
@@ -81,11 +80,11 @@ As shown in the component view above, a potential hotspot is detected in Miami, 
  
 Furthermore, given the dynamic nature of the situation, the plans need to be continuously optimized with the latest information. 
 
-A vaccine typically travels through multiple sites before being ready for shipment. Multiple companies are involved to manufacture the vaccines. Vaccines need to be handled at an optimal cool temperature (36-46 degrees F) and managed through the cold chain process. For high-value items like vaccines, clinical trial samples and lifesaving medications,  a fluctuation as minor as 2 degrees Celsius can reduce or even eliminate effectiveness, the stakes couldn't be higher. 
+A vaccine typically travels through multiple sites before being ready for shipment. Multiple companies are involved to manufacture the vaccines. Vaccines need to be handled at an optimal cool temperature (-50 degrees C) and managed through the cold chain process. For high-value items like vaccines, clinical trial samples and lifesaving medications,  a fluctuation as minor as 2 degrees Celsius can reduce or even eliminate effectiveness, the stakes couldn't be higher. 
 
 As the shipment of vaccines is underway, cold chain monitoring service monitors the performance of the cold chain in real time. This is supported by two components: 
 
-* A real time stateful operator connected to the event streams coming as reefer telemetries: The refrigerated containers, those would be used to ship the Vaccines to the Medical facilities, need monitoring. That is to ensure that all sensors within the containers are working properly so that its internal control system maintains  the necessary temperature and the concentration of cryogenic fluids. Otherwise the Vaccines would be spoiled and cannot be used for the treatment of patients. The data of various sensors from the containers (while they are on job to fulfill a shipment) can be continuously captured as [event data and kept in any kind of datastore](./solution/cold-monitoring/). 
+* A real time stateful operator connected to the event streams coming as refrigerator telemetries: The refrigerated containers, those would be used to ship and keep the Vaccines to the Medical facilities, need monitoring. That is to ensure that all sensors within the containers are working properly so that its internal control system maintains  the necessary temperature and the concentration of cryogenic fluids. Otherwise the Vaccines would be spoiled and cannot be used for the treatment of patients. The data of various sensors from the containers (while they are on job to fulfill a shipment) can be continuously captured as [event data and kept in any kind of datastore](./solution/cold-monitoring/). 
 * an anomaly detection scoring model developed, deployed and monitored using Watson capabilities within [Cloud Pak for Data](./solution/cp4d/). Like any other Cloud Pak, Cloud Pak for Data can also run in any Cloud infrastructure - IBM Cloud, Azure, Google or Amazon or even in On Premise infrastructure.
 
 The telemetry can be used to build a AI model to continuously check if any irregularity happening in the Containers while in move (which can in turn spoil the Vaccines).
