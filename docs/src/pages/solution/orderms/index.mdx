@@ -3,35 +3,34 @@ title: Vaccine Order Management
 description: This microservice manage order for vaccine
 ---
 <PageDescription>
-This microservice manages vaccine order for a world wide demand and distribution.
+This microservice manages vaccine orders for a world wide demand and distribution. This is an example of 
 </PageDescription>
 
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
   <AnchorLink>Build with s2i</AnchorLink>
-  <AnchorLink>Run Locally</AnchorLink>
-  <AnchorLink>Deploy to OpenShift</AnchorLink>
-  <AnchorLink>Usage Details</AnchorLink>
+  <AnchorLink>Assess application runs</AnchorLink>
+  <AnchorLink>Demonstration script</AnchorLink>
 </AnchorLinks>
 
 ## Overview
 
 This project implements a very simple event driven microservice to support the Create, Read, Update, of vaccine orders. This implementation highlights the following capbilities / patterns:
 
-* Quarkus reactive microservice using Microprofile 3.x - reactive messaging extension 
+* Quarkus reactive microservice using Microprofile 3.x - reactive messaging extension to consume Vaccine lot shipment plans
 * DB2 with Hibernate ORM with Quarkus Panache
-* Quarkus Debezium Outbox pattern to get OrderEvents table and change data capture with Debezium.
+* Quarkus Debezium Outbox pattern to get update to the OrderEvents table using Debezium change data capture and DB2 change agent.
 
-In term of business scenario, a sale representative uses his mobile device to enter information about a vaccine order to be shipped to a given countries or a province within a country. 
+In term of business scenario, a sale representative uses his mobile device or web browser to enter information about a vaccine order to be shipped to a given country or a province within a country. 
 
  ![](./images/order-ui.png)
 
-The user interface is for demonstration purpose but illustrate some standard Vuejs development practices. 
+The user interface is for demonstration purpose only and illustrates some standard Vuejs development practices. 
 
  ![](./images/vaccine-order-1.png)
 
 
-The component writes to the database (DB2) all the orders received, but also produce records to Kafka via the Outbox pattern and change data capture.
+The component writes to the database (DB2) all the orders received, but also produces records to Kafka via the Outbox pattern and change data capture.
 
 **Github repository:** [Vaccine-order-mgr](https://github.com/ibm-cloud-architecture/vaccine-order-mgr)
 
@@ -63,21 +62,20 @@ This microservice is built using maven and Quarkus extensions. We have already p
 
 To build and run locally see the [repository main readme](https://github.com/ibm-cloud-architecture/vaccine-order-mgr) as we have different docker-compose files to run in demonstration mode or in development mode.
 
-In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access DB2, and Kafka. So first thing is to define such secrets.
+In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access DB2, and Kafka deployed in Cloud Pak for Integration. So first thing is to define such secrets and config map.
 
-As an example we use a OpenShift project called vaccine_solution created with a command like `oc new-project vaccine_solution`.
+As an example we created the OpenShift project called "vaccine" with a command: `oc new-project vaccine`.
 
 ### Pre requisites
 
 The orders are persisted in an external DB2 instance running on IBM Cloud Pack for Data. You need to get the username and password to connect to the DB2 instance with the jdbc URL (something like jdbc:db2://dashdb-....:50001/BLUDB)
 
-Get an instance of Kafka deployed on OpenShift (Strimzi, [Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). 
-
+Get an instance of Kafka deployed on OpenShift like [IBM Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). 
 
 
 ### Defining DB access secrets
 
-We need to get IBM DB2 on Cloud credentials as secrets. So from the DB2 service credentials get the following attributes: user, password, and JDBC URL. You need to encrypt each of those values:
+We need to get IBM DB2 user credentials and JDBC URL as secrets. So from the DB2 service credentials get the following attributes: user, password, and JDBC URL. You need to encrypt each of those values using base64 encoding:
 
 ```shell
 # Example of URL encryption
@@ -93,44 +91,65 @@ kind: Secret
 metadata:
   name: vaccine-order-db-secret
 data:
-    db.url: ...encrypted URL...
-    db.user: ...encrypted user..
-    db.password: ...encrypted pwd
+    DB_URL: ...encrypted URL...
+    DB_USER: ...encrypted user..
+    DB_PWD: ...encrypted pwd
 EOF
 ```
+
+See [the file here](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/src/main/kubernetes/secrets.yaml)
 
 ### Get Event Streams credentials
 
 For Event Streams get URL of the bootstrap server and the service credentials (TLS certificates) following [those instructions.](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#getting-tls-authentication-from-event-streams-on-openshift)
 
-To summarize what can be done, we assume Event Streams is deployed in `eventstreams` project and the solution is running under `vaccine` namespace.
+We assume Event Streams is deployed in `eventstreams` project and the solution is running under `vaccine` namespace.
 
-* If you need to access Event Streams from an application outside of CP4I cluster then create a scram access user. Verify the user is created with `oc get kafkausers -n eventstreams`, and then set the application property for the sasl config:
-
-  ```properties
-  kafka.bootstrap.servers=${KAFKA_BROKERS:kafka:9092}
-  %dev.kafka.security.protocol=SASL_SSL
-  %dev.kafka.sasl.mechanism=SCRAM-SHA-512
-  %dev.kafka.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username\=\"${KAFKA_USER}\" password\=\"${KAFKA_PWD}\";
-  ```
-
-* With remote connection the client application needs the server side public TLS certificate. See [those instructions](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#get-tls-server-public-certificate) to get the Server TLS certificate into the `certs` folder for local run as a secret for deploying to OpenShift. The following command copy the ca cert secret to the current OpenShift project:
+* Client application will use the server side public TLS certificate to connect to Kafka Brokers. See [those instructions](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#get-tls-server-public-certificate) to get the Server TLS certificate into the `certs` folder for local run as a secret for deploying to OpenShift. The following command copy the event streams ca cert secret to the current OpenShift project so it can be mounted to a path for the order microservice to get access to:
 
  ```shell
  # Under the 'vaccine' project
  oc get secret light-es-cluster-ca-cert   -n eventstreams --export -o yaml | oc apply -f -
  ```
 
- * Modify the `application.properties` file to define the kafka connection properties as when deployed on the same OpenShift cluster as Event Streams the connection will use TLS credentials
- 
- ```properties
- kafka.ssl.protocol=TLSv1.2
- kafka.ssl.truststore.location=${KAFKA_CERT_PATH}
- kafka.ssl.truststore.password=${KAFKA_CERT_PWD}
- ```
+* Modify the config map from [src/main/kubernetes/configmap.yaml](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/src/main/kubernetes/configmap.yaml) with the URL of your bootstrap server.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vaccine-order-ms-cm
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "light-es-kafka-bootstrap.eventstreams.svc:9092"
+  KAFKA_SSL_PROTOCOL: "TLSv1.2"
+  KAFKA_SSL_TRUSTSTORE_LOCATION: "/deployments/certs/server/ca.p12"
+  KAFKA_SSL_TRUSTSTORE_TYPE: "PKCS12"
+  SHIPMENT_PLAN_TOPIC: "vaccine_shipment_plans"
+```
+
+Those environment variables are used by the application, and configured via the [src/main/resources/application.properties](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/src/main/resources/application.properties). Below is the declarations that define environment variables from the previously created secrets and configmap.
+
+```propertiies
+quarkus.openshift.env.configmaps=vaccine-order-ms-cm
+quarkus.openshift.env.secrets=vaccine-order-secrets
+quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.from-secret=light-es-cluster-ca-cert
+quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.with-key=ca.password
+quarkus.openshift.mounts.es-cert.path=/deployments/certs/server
+quarkus.openshift.secret-volumes.es-cert.secret-name=light-es-cluster-ca-cert
+```
+
+### Remote access to event streams
+
+* If you need to access Event Streams from an application running outside of CP4I cluster then create a scram access user. Verify the user is created with `oc get kafkausers -n eventstreams`, and then add the following declarations into the config maps:
+
+  ```properties
+  KAFKA_SECURITY_PROTOCOL: "SASL_SSL"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"
+  KAFKA_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.scram.ScramLoginModule required username\=\"${KAFKA_USER}\" password\=\"${KAFKA_PWD}\";"
+  ```
 
 
-### build
+### Build and deploy
 
 ```shell
 # if not logged yes to your openshift cluster where the docker private registry resides do:
@@ -144,118 +163,10 @@ It can take some seconds to build and deploy: `oc get pods -w` lets you see the 
 
 ...The deployed application can be accessed at: http://quarkus-kstreams-lab3...
 
-## Run
+## Demonstration script
 
+### User interface 
 
-### Deployment Parameters
-
-The following deployment parameters are defined in the `app-deploy.yaml` file:
-
-| Name                                     | Required | Description                                                                                                            |
-|------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------|
-| KAFKA_BROKERS                            | YES      | Comma-separated list of Kafka brokers to connect to                                                                    |
-| KAFKA_APIKEY                             | NO       | API Key used to connect to SASL-secured Kafka brokers. This is required when connecting to IBM Event Streams clusters. |
-| TRUSTSTORE_ENABLED                       | NO       | Required to be set to `true` when connecting to IBM Event Streams on the IBM Cloud Pak for Integration (CP4I).         |
-| TRUSTSTORE_PATH                          | NO       | The local path to the required truststore file when connecting to IBM Event Streams on CP4I. See [**Volume Mounts**](#volume-mounts) below.  |
-| TRUSTSTORE_PWD                           | NO       | The password for the truststore file used for IBM Event Streams server verification. |
-| DBUSER | YES | Database user |
-| DBPWD | YES | Database user password |
-| SSLJDBCURL | YES | JDBC URL to connect to the database | 
-
-You can define a `.env` script to export the environment variables. 
-
-### Run Locally
-
-When running the microservice locally you must specify all the required [deployment parameters](#deployment-parameters) environment variables. When using `appsody run` use the `--docker-options` flag being passed in from the Appsody CLI command. 
-Two options to start locally, one with quarkus, the other one with appsody
-
-**With Quarkus:**
-
-```shell
-source ./scripts/setenv.sh
-./mvnw quarkus:dev
-```
-
-**With Appsody:** 
-
-```shell
-source ./scripts/setenv.sh
-
-appsody run --docker-options "-e KAFKA_BROKERS=$KAFKA_BROKERS -e KAFKA_APIKEY=$KAFKA_APIKEY -e DBPWD=$DBPWD -e DBUSER=$DBUSER -e SSLJDBCURL=$SSLJDBCURL  -v $(pwd)/certs/es-cert.jks:/deployments/certs/es-cert.jks"
-```
-
-For more details on running the microservice locally, consult the Appsody run documentation as well as the deployment information contained in the app-deploy.yaml file.
-
-### Volume mounts
-
-The order manager microservice requires up to one file to be injected at runtime for proper operation. As noted in the `TRUSTSTORE_PATH` parameter above, these files are SSL-based certificates which are required to verify the identity of the external service when calling it. These files are provided as `--docker-options "-v host-src:container-dest ..."` when running the microservice locally and as a Volume Mount when running the microservice on a Kubernetes cluster.
-
-The `TRUSTSTORE_PATH` parameter is documented in the **Event Streams Certificates** section of the [Prerequisites](/microservices/prereqs/#ibm-event-streams-on-redhat-openshift-container-platform) page. The Appsody run command should include a parameter similar to `-v ./certs/es-cert.jks:/config/resources/security/es-cert.jks` in its `--docker-options` string to run this microservice locally.
-
-**Example:** `appsody run --docker-options "-v /Users/myuser/Downloads/es-cert.jks:/config/resources/security/es-ssl/es-cert.jks" ...`
-
-## Deploy to Openshift 
-
-* Define a config map for the kafka brokers URL coming from the Event streams cluster connection panel:
-
- ![3](./images/es-cluster-connect.png)
-
-  ```shell
-  oc create configmap kafka-brokers --from-literal=brokers='es-cp4i-ibm-es-proxy-route-bootstrap-eventstreams-cp4i.gse-eda-demo-202005-fa9ee67c9ab6a7791435450358e564cc-0000.us-south.containers.appdomain.cloud:443' -n vaccine-cold-chain
-
-  ```
-
-* Define a secret for the event streams API key
-
-  ```shell
-  oc create secret generic es-cp4i-apikey --from-literal=binding='b77......tgMJZ' -n vaccine_solution
-  ```
-
-* Add a secret for the java truststore, downloaded from Event Stream console or using the CLI `cloudctl es certificates --format jks`
-
-  ```shell
-  oc create secret generic es-truststore-jks --from-file=certs/es-cert.jks
-  ```
-
-* Modify the `app-deploy.yaml` to add environment variables and mount point.
-
-```yaml
-  env:
-    - name: KAFKA_BROKERS
-      valueFrom:
-        configMapKeyRef:
-          key: brokers
-          name: kafka-brokers
-    - name: KAFKA_APIKEY
-      valueFrom:
-        secretKeyRef:
-          key: binding
-          name: es-cp4i-apikey
-          optional: true
-    - name: CERT_LOCATION
-      value: /config/certs/truststore.jks
-```
-
-
-The [Appsody Operator](https://appsody.dev/docs/reference/appsody-operator/) is a required prerequisite for deploying the microservice to a remote Kubernetes or OpenShift cluster. If the operator is not present in the current project, `appsody deploy... ` will add one.
-
-To deploy the microservice to a remote cluster:
-
-```shell
-# Get the route to reach the docker private registry
-oc get route --all-namespaces | grep registry
-# Define the path as environment variable
-export IMAGE_REGISTRY=default-route-openshift-image-registry.gse-eda-demo-202005-fa9ee67c9ab6a7791435450358e564cc-0000.us-south.containers.appdomain.cloud
-# Deploy with appsody
-
-appsody deploy -t vaccine-cold-chain/vaccine-order-mgr:0.0.1 --push-url $IMAGE_REGISTRY --push --no-build --namespace vaccine-cold-chain
-```
-
-- You can omit the `--no-build` flag to have Appsody perform a build before deploying the application.
-- _**Note:**_ Performing a build at deploy time requires specifying the absolute container reference path, as well as the `--push` flag.
-- The neccesary deployment parameter information will be read from the `app-deploy.yaml` file in the same directory.
-
-## Usage Details
 
 ### REST APIs
 
