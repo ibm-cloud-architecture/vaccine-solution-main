@@ -6,7 +6,13 @@ The content of this repository is presented [in a BOOK view](https://ibm-cloud-a
 
 ## The solution repositories
 
-* [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr): Expose API to manage vaccine order. Based on Appsody Quarkus stack with reactive programming implementation. Consume messages on the orders topic.
+Two main use cases are supported by this solution: cold chain monitoring, and optimized order management.
+
+1. Optimized order management:
+
+  * [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg): Exposes API to manage vaccine order. Based on Quarkus, Hibernate Panache ORM, Postgresql, Debezium outbox, reactive messaging.
+  * 
+
 * [Reefer IoT simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator): A python service to simulate sending sensor telemetries to Kafka, with exposed API to control the simulation and the demonstration for anomaly detection and cold chain temperature monitoring. 
 
 ## Building this booklet locally

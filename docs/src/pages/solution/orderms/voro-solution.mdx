@@ -123,10 +123,10 @@ The swagger looks like:
  es-cert.pem:  1164 bytes
  ```
 
-* Copy the Kafka user's secret from the e`ventstreams` or Kafka project to the current vaccine project. This secret has two data fields: username and password
+* Copy the Kafka user's secret from the `eventstreams` or Kafka project to the current vaccine project. This secret has two data fields: username and password
 
  ```shell
- oc get secret eventstreams-cred -n eventstreams --export -o yaml | oc apply -f - 
+ oc get secret app-user-tls  -n eventstreams --export -o yaml | oc apply -f - 
  ```
 
 They are used in the Deployment configuration as:
@@ -136,16 +136,36 @@ They are used in the Deployment configuration as:
     valueFrom:
       secretKeyRef:
         key: username
-        name: eventstreams-cred
+        name: app-user-tls
   - name: KAFKA_PASSWORD
     valueFrom:
       secretKeyRef:
         key: password
-        name: eventstreams-cred
+        name: app-user-tls
  ```
+
+* Deploy the application using: `oc apply -f kubernetes/app-deployment.yaml`
 
 ## Usage Details
 
-This section address a simple validation of this component as standalone. 
+This section addresses how to validate the app is running. 
 
-TBD
+* Once the application is deployed on OpenShift get the routes to the external exposed URL:
+
+ ```shell
+  oc describe routes vaccine-order-optimizer 
+ ```
+
+* Access the swagger. As an example of URL: http://vaccine-order-optimizer-vaccine......cloud/apidocs/
+
+* Trigger the data loading with the operation:
+ 
+ ```
+ curl -X POST  http://vaccine-order-optimizer-vaccine......cloud/api/v1/optimize/loadData "
+ ```
+
+ * Send a new order
+
+ ```
+ curl -X POST -H "Content-Type: application/json" http://vaccine-order-optimizer-vaccine......cloud/    --data "@./data/order1.json"
+ ```
