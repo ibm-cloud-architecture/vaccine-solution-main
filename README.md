@@ -11,9 +11,12 @@ Two main use cases are supported by this solution: cold chain monitoring, and op
 1. Optimized order management:
 
   * [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg): Exposes API to manage vaccine order. Based on Quarkus, Hibernate Panache ORM, Postgresql, Debezium outbox, reactive messaging.
-  * 
+  * [Order Optimizer service](https://github.com/ibm-cloud-architecture/vaccine-order-optimizer) to support event driven service to compute the best shipment plan for shipping vaccine lots to different countries.
 
-* [Reefer IoT simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator): A python service to simulate sending sensor telemetries to Kafka, with exposed API to control the simulation and the demonstration for anomaly detection and cold chain temperature monitoring. 
+2. Cold Chain monitoring
+
+   * [Reefer IoT simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator): A python service to simulate sending sensor telemetries to Kafka, with exposed API to control the simulation and the demonstration for anomaly detection and cold chain temperature monitoring.
+   * [Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent): Kafka streams app, in Quarkus to assess the temperature telemetries for cold chain violation. Call anomaly detection service.
 
 ## Building this booklet locally
 

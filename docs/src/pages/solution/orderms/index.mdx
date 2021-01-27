@@ -11,8 +11,7 @@ The DevOps is supported by Git Action and then gitops repository.
 
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
-  <AnchorLink>Build with s2i</AnchorLink>
-  <AnchorLink>Assess application runs</AnchorLink>
+  <AnchorLink>Build and deploy to OpenShift</AnchorLink>
   <AnchorLink>Demonstration script</AnchorLink>
 </AnchorLinks>
 
@@ -56,7 +55,7 @@ We will simplify the process and aggregate in the following event types:
 * orderUpdated
 
 
-## Build with s2i
+## Build and deploy to OpenShift
 
 This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
 
@@ -127,41 +126,41 @@ For Event Streams get URL of the bootstrap server and the service credentials (T
 
 If not done before, copy the cluster certificate via the secret to your project (`vaccine`):
 
- ```shell
- oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
- ```
+  ```shell
+  oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
+  ```
 
 ### Define environment variables via ConfigMap
 
 Modify the config map from [src/main/kubernetes/configmap.yaml](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/kubernetes/configmap.yaml) with the URL of your Kafka bootstrap server.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vaccine-order-ms-cm
-data:
-  KAFKA_BOOTSTRAP_SERVERS: "light-es-kafka-bootstrap.eventstreams.svc:9092"
-  KAFKA_SSL_PROTOCOL: "TLSv1.2"
-  KAFKA_SSL_TRUSTSTORE_LOCATION: "/deployments/certs/server/ca.p12"
-  KAFKA_SSL_TRUSTSTORE_TYPE: "PKCS12"
-  SHIPMENT_PLAN_TOPIC: "vaccine_shipment_plans"
-  KAFKA_SASL_MECHANISM: SCRAM-SHA-512
-  KAFKA_SECURITY_PROTOCOL: SASL_SSL
-```
+  ```yaml
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: vaccine-order-ms-cm
+  data:
+    KAFKA_BOOTSTRAP_SERVERS: "light-es-kafka-bootstrap.eventstreams.svc:9092"
+    KAFKA_SSL_PROTOCOL: "TLSv1.2"
+    KAFKA_SSL_TRUSTSTORE_LOCATION: "/deployments/certs/server/ca.p12"
+    KAFKA_SSL_TRUSTSTORE_TYPE: "PKCS12"
+    SHIPMENT_PLAN_TOPIC: "vaccine_shipment_plans"
+    KAFKA_SASL_MECHANISM: SCRAM-SHA-512
+    KAFKA_SECURITY_PROTOCOL: SASL_SSL
+  ```
 
 Those environment variables are used by the application, and configured via the [src/main/resources/application.properties](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/resources/application.properties). Below is the declaration that defines environment variables from the previously created secrets and configmap.
 
-```propertiies
-quarkus.openshift.env.configmaps=vaccine-order-ms-cm
-quarkus.openshift.env.secrets=vaccine-order-secrets
-quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.from-secret=eda.dev-cluster-ca-cert
-quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.with-key=ca.password
-quarkus.openshift.mounts.es-cert.path=/deployments/certs/server
-quarkus.openshift.secret-volumes.es-cert.secret-name=eda-gse-cluster-ca-cert
-```
+  ```propertiies
+  quarkus.openshift.env.configmaps=vaccine-order-ms-cm
+  quarkus.openshift.env.secrets=vaccine-order-secrets
+  quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.from-secret=eda.dev-cluster-ca-cert
+  quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.with-key=ca.password
+  quarkus.openshift.mounts.es-cert.path=/deployments/certs/server
+  quarkus.openshift.secret-volumes.es-cert.secret-name=eda-gse-cluster-ca-cert
+  ```
 
-* Then proceed with the following command:
+* Then proceed with the following command to define the config map into OpenShift:
 
  ```shell
  oc apply -f src/main/kubernetes/configmap.yaml
@@ -171,16 +170,18 @@ quarkus.openshift.secret-volumes.es-cert.secret-name=eda-gse-cluster-ca-cert
 
 The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift:
 
-```shell
-./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
-```
+ ```shell
+ ./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
+ ```
 
 The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging build a runner jar and push it to the private image registry in OpenShift.
 
 
 It can take some seconds to build and deploy: `oc get pods -w` lets you see the build pods and the running app once the build is done. As we set properties to expose the application, an OpenShift route was created. 
 
-* Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
+* Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project. Using your web browser, pointing to this address you should get the UI:
+
+ ![](./images/ui-home.png)
 
 
 ### Deploy Debezium CDC connector
@@ -288,12 +289,17 @@ The outbox table of the order events has metadata attributes and then a payload 
    "type":"OrderCreated",
    "timestamp":1611459848131634,
    "payload":"{\"orderID\":1,\"deliveryLocation\":\"Paris\",\"quantity\":150,\"priority\":2,\"deliveryDate\":\"2021-01-24\",\"askingOrganization\":\"French Government\",\"vaccineType\":\"COVID-19\",\"status\":\"OPEN\",\"creationDate\":\"24-Jan-2021 03:44:08\"}",
-  "tracingspancontext":"#Sun Jan 24 03:44:08 GMT 2021\nuber-trace-id=f3ab550be680777f\\:e88609bb44ceb21b\\:f3ab550be680777f\\:0\n"},
-  "source":{"version":"1.4.0.Final","connector":"postgresql","name":"vaccine","ts_ms":1611712125168,"snapshot":"last","db":"postgres","schema":"public","table":"orderevents","txId":1371,"lsn":41341808,"xmin":null},"op":"r","ts_ms":1611712125173,"transaction":null}
+  "tracingspancontext":"#Sun Jan 24 03:44:08 GMT 2021\n"},
+  "source":{"version":"1.4.0.Final",
+  "connector":"postgresql","name":"vaccine",
+  "ts_ms":1611712125168,"snapshot":"last",
+  "db":"postgres","schema":"public","table":"orderevents",
+  "txId":1371,"lsn":41341808,"xmin":null},"op":"r","ts_ms":1611712125173,"transaction":null}
   ```
+
 ### REST APIs
 
-The REST end point for this service expose the following OpenAPI:
+The REST end points this service expose are in the OpenApi doc below, but not all operations are fully implemented yet.
 
  ![4](./images/openapi.png)
 
