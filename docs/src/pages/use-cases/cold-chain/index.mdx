@@ -1,11 +1,102 @@
 ---
-title: Cold chain monitoring
-description: Cold chain monitoring
---- 
+title: Cold-chain monitoring
+description: Cold-chain monitoring
+---
 
-The vaccine lots need to be kept as a constant temperature of a time period. The sensors telemetries coming from the refrigerator containers are processed to assess cold chain violation.
+The vaccine lots need to be kept at a constant temperature for a period of time. The sensor telemetry data coming from the refrigerated shipping containers is processed to assess cold-chain violations.
 
-For that purpose the solution includes streaming of telemetry events, a stateful microservice to implement aggregate, and alarm generation, and integration to refrigerator service to log issue on the device.
+The solution for this use case includes streaming telemetry events, a stateful microservice to implement aggregation & alarm generation, and integration with a microservice to log issues against the refrigerated shipping container.
+
+## Components involved in this use case
+
+* [Vaccine Reefer Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
+* [Vaccine Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
+* [IBM Event Streams](https://ibm.github.io/event-streams/)
+* WatsonML-based anomaly detection microservice
+
+## Run on OpenShift
+
+### Prerequsites
+
+1. Create the following artifacts in the `eventstreams` namespace on your OpenShift cluster:
+
+   1. Create an EventStreams instance named `kafka` _(via the [Event Streams Custom Resource](https://ibm.github.io/event-streams/installing/installing/#install-an-event-streams-instance))_.
+   2. Create a [Kafka User with SCRAM-based credentials](https://ibm.github.io/event-streams/security/managing-access/#managing-access-to-kafka-resources), as required by the [Vaccine Reefer Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator#application-deployment).
+   3. Create a [Kafka User with TLS credentials](https://ibm.github.io/event-streams/security/managing-access/#managing-access-to-kafka-resources), as required by the [Vaccine Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent#create-a-tls-user).
+
+2. Create a new project named `coldchain` that will be used for the deployment of all other components.
+
+### Deploy the Vaccine Reefer Simulator
+
+1. Ensure you are working inside the correct project via the following `oc` command:
+
+  ```shell
+  oc project coldchain
+  ```
+
+2. Create a ConfigMap named `reefer-simul-cm` with the following `oc` command:
+
+  ```shell
+  oc create configmap reefer-simul-cm \
+  --from-literal=KAFKA_CERT=/app/certs/ca.crt \
+  --from-literal=KAFKA_MAIN_TOPIC=telemetries \
+  --from-literal=KAFKA_BROKERS=___kafka-kafka-bootstrap-eventstreams.cluster.appdomain.cloud:443___
+  ```
+   - Replacing the value of `KAFKA_BROKERS` above with the **External** cluster bootstrap address presented to you during the creation of your SCRAM-based KafkaUser.
+   - This value can be accessed via the following `oc` command, which does not include the required `443` port number at the end:
+    ```shell
+    oc get route -n eventstreams kafka-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}"
+    ```
+
+3. Create a Secret named `reefer-simul-secret` with the following `oc` command:
+
+  ```shell
+  oc create secret generic reefer-simul-secret \
+  --from-literal=KAFKA_USER=___your-scram-based-kafka-user-name___ \
+  --from-literal=KAFKA_PASSWORD=___your-scram-based-kafka-user-password___
+  ```
+   - Replacing the values above with the values generated during the creation of your SCRAM-based KafkaUser.
+
+4. Copy the server-side public certificate of the Event Streams instance to your local project:
+  ```shell
+  oc get secret kafka-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -n coldchain -f -
+  ```
+   - Note that this secret name in the `eventstreams` namespace will be different if you did not name your EventStreams instance `kafka`.
+
+5. Deploy the microservice components via the following `oc apply` command:
+
+  ```shell
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/app-deployment.yaml
+  ```
+
+6. Visit the Flasgger API page for the microservice at the URL available via the following `oc` command:
+
+   ```shell
+   oc get route vaccine-reefer-simulator -o jsonpath="http://{.status.ingress[0].host}"
+   ```
 
 
-To be continued...
+
+### Deploy the Vaccine Monitoring Agent
+
+* https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent#running-on-openshift-with-event-streams-co-located-in-same-cluster
+
+## Scenario script
+
+Once the solution is up and running, execute the following steps to present an end-to-end demonstration:
+
+### Generate vaccine container telemetry events
+
+TBD
+
+### Analyze generated container anomolies
+
+TBD
+
+### Analyze generate cold-chain violations
+
+TBD
+
+### Perform vaccine container maintenance
+
+TBD Scoring?
