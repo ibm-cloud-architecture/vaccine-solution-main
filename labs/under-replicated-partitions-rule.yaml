@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+    labels:
+        component: icp-prometheus
+    name: es-underreplicated-partition-count
+spec:
+    groups:
+      - name: UnderReplicatedPartitions
+        rules:
+          - alert: UnderReplicatedPartitions
+            expr: kafka_server_replicamanager_underreplicatedpartitions_value > 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              identifier: 'Under-replicated Partitions'
+              description: 'There are {{ $value }} under-replicated partition(s) reported by broker {{ $labels.kafka }}'
+    enabled: true

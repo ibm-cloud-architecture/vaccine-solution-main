@@ -71,7 +71,7 @@ As an example we created the OpenShift project called "vaccine" with a command: 
 * Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
 
   ```shell
-  # Define environemt variables
+  # Define environement variables
   SERVICE_ACCOUNT_NAME=postgres-sa
   DEPLOYMENT_NAME=postgres
   SERVICE_NAME=postgres
@@ -151,7 +151,7 @@ Modify the config map from [src/main/kubernetes/configmap.yaml](https://github.c
 
 Those environment variables are used by the application, and configured via the [src/main/resources/application.properties](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/resources/application.properties). Below is the declaration that defines environment variables from the previously created secrets and configmap.
 
-  ```propertiies
+  ```properties
   quarkus.openshift.env.configmaps=vaccine-order-ms-cm
   quarkus.openshift.env.secrets=vaccine-order-secrets
   quarkus.openshift.env.mapping.KAFKA_SSL_TRUSTSTORE_PASSWORD.from-secret=eda.dev-cluster-ca-cert

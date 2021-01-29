@@ -6,20 +6,71 @@ description: Order management and optimization demonstration
 This note let you run the order management code with a simple scenario that addresses the following features:
 
 * Create Order with a User interface
-* Validate the [outbox pattern]() works to get OrderCreated, OrderUpdated or OrderCancelled Events to Kafka
-* Validate the blockchain has a record for the newly created order
+* Validate the [outbox pattern](https://ibm-cloud-architecture.github.io/refarch-eda/patterns/intro/#transactional-outbox) works to get OrderCreated, OrderUpdated or OrderCancelled Events to a dedicated table in postgres
+* Validate how [Debezium CDC](https://debezium.io/documentation/reference/1.4/connectors/postgresql.html) for postgres as a Kafka connector, produces OrderEvents from the table to Kafka.
 * Integrate with the Shipment plan optimization
 
 ## Components involved in this demonstration
 
-* Order Service
+* Vaccine Order Service
+* Postgres DB
 * Debezium for change data capture on the outbox table
 * Kafka 
-* Order Optimization Service
+* Vaccine Order Reefer Optimization Service
+
+ ![](../../solution/orderms/images/vaccine-order-1.png)
+
+To have a deeper understanding of the order service read [this overview section](/solution/orderms/#overview). For the Vaccine order reefer optimization service [the design article](/design/voro/) details the optimization approach, while the [solution article](/solution/orderms/voro-solution/#overview) goes over the service implementation details.
+
+## Deploy to OpenShift 
+
+### Pre-requisites
+
+* You need:
+    * docker and docker compose on your laptop to run locally or build image
+    * Java 11
+    * git client 
+    * Get access to an OpenShift cluster with Cloud Pak for integration and event streams installed.
+    * Have a TLS user and a SCRAM user created in the event streams OpenShift project. See [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites/#generate-scram-service-credentials) if needed.
+
+* Clone the two main projects:
+
+ ```shell
+ git clone https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg
+ git clone https://github.com/ibm-cloud-architecture/vaccine-order-optimization-pg
+ ```
+
+### Deploy the Vaccine Order Service
+
+This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
+
+* Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
+
+  ```shell
+  # Define environement variables
+  SERVICE_ACCOUNT_NAME=postgres-sa
+  DEPLOYMENT_NAME=postgres
+  SERVICE_NAME=postgres
+  DOCKER_IMAGE=docker.io/postgres:11.6-alpine
+  POSTGRES_PASSWORD=adifficultpasswordtoguess
+
+  oc create serviceaccount ${SERVICE_ACCOUNT_NAME}
+  oc adm policy add-scc-to-user anyuid -n ${PROJECT_NAME} -z ${SERVICE_ACCOUNT_NAME}
+  oc create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_IMAGE}
+  oc set serviceaccount deployment/${DEPLOYMENT_NAME} ${SERVICE_ACCOUNT_NAME}
+  oc patch deployment ${DEPLOYMENT_NAME} --type="json" -p='[{"op":"add", "path":"/spec/template/spec/containers/0/args", "value":[]},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"-c"},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"wal_level=logical"} ]'
+  oc set env deployment ${DEPLOYMENT_NAME} POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  oc expose deployment ${DEPLOYMENT_NAME} --port 5432 --name ${SERVICE_NAME}
+  ```
+
+* Get an instance of Kafka deployed on OpenShift like [IBM Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). 
+
+### Deploy the Optimization Service
 
 ## Scenario script
 
 Once the solution is up and running in your target deployment environment (local or OpenShift) execute the following steps to present an end to end demonstration.
+
 
 ### Validate existing vaccine lot shipment plan
 
@@ -31,8 +82,3 @@ Once the solution is up and running in your target deployment environment (local
 
 ### Present the events created
 
-## Run locally
-
-As a lightweight approach you can run the solution with docker compose. For that the configuration, test data and 
-
-## Run on OpenShift 

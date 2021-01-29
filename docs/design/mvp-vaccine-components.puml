@@ -1,7 +1,6 @@
 @startuml "mvp-vaccine-comp-view"
 !includeurl  https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
 
-LAYOUT_LEFT_RIGHT
 title Components diagram for the Vaccine Monitoring solution
 
 Person(SaleRep,Staff,"Sale Representant")
@@ -11,6 +10,7 @@ System_Boundary(vms,"Vaccine_Monitoring_Solution") {
     Container(orderms,"Order management Service","Java", "Microservice to manage order")
     Container(reefers_mgr,"Reefer Mgr","Java","Microservice to manage reefer container entities")
     ContainerDb(reeferDB,"Reefer DB","DB2","Persist Reefer Containers data and states")
+    ContainerDb(orderDB,"Order DB","DB2","Persist Orders data and states")
     Container(message_bus, "Message Bus", "Kafka", "Transport for business events")
     Container(cold_chain_monitoring,"Cold Chain Monitoring","Agent, Kafka Stream","Process Telemetries in real time")
     Container(optim,"Order and Reefer Container Optimization","CPLEX API","CPLEX")
@@ -22,8 +22,10 @@ Rel(VaccineCoordinator,orderms,"Create orders","HTTPS")
 Rel(SaleRep,orderms,"Uses", "HTTPS")
 Rel(VaccineCoordinator,maintenance_process,"Process refrigerator maintenance","HTTPS")
 Rel(reefers_mgr,reeferDB,"Persists reefers to","JDBC")
-Rel(orderms,optim,"Schedules container allocation","HTTPS")
-Rel(orderms,message_bus,"Publishes","HTTPS")
+Rel(optim,message_bus,"Consume orders, inventry, reefers","HTTPS")
+Rel(orderms,message_bus,"Publishes","Kafka")
+Rel(orderms,orderDB,"Persist Order","JDBC")
+Rel(optim,message_bus,"Publishes shipment plans","Kafka")
 
 Rel(message_bus, reefers_mgr, "Subscribes to vaccine events","HTTPS,Kafka")
 Rel(message_bus,cold_chain_monitoring,"Subscribes telemetries","HTTPS,Kafka")

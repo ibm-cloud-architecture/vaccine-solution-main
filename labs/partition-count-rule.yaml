@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+    labels:
+        component: icp-prometheus
+    name: es-partition-count
+spec:
+    groups:
+      - name: PartitionCount
+        rules:
+          - alert: PartitionCount
+            expr: kafka_server_replicamanager_partitioncount_value > 50
+            for: 10s
+            labels:
+              severity: critical
+            annotations:
+              identifier: 'Partition count'
+              description: 'There are {{ $value }} partition(s) reported by broker {{ $labels.kafka }}'

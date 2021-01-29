@@ -1,7 +1,7 @@
 @startuml "vaccine-comp-view"
 !includeurl  https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
 
-LAYOUT_LEFT_RIGHT
+
 title Components diagram for the Vaccine Monitoring solution
 
 
@@ -10,44 +10,41 @@ Person(VaccineCoordinator,Staff,"Vaccine Operator")
 System_Ext(reefer,"Refrigerator Container IoT")
 System_Boundary(vms,"Vaccine_Monitoring_Solution") {
     Container(app, "Vaccine Order Portal", "Javascript, Vuejs", "Allows staff to enter shipping order")
-    Container(orderms,"Order management Service","Java", "Microservice to manage order")
+    Container(orderms,"Order management Service","Java Quarkus", "Microservice to manage order")
     ContainerDb(vaccineDB,"Vaccine DB","DB2","Persist Vaccine data and states")
   
-    Container(reefers_mgr,"Reefer Mgr","Java, Springboot","Microservice to manage reefer container entities")
+    Container(reefers_mgr,"Reefer Mgr","Java Quarkus","Microservice to manage reefer container entities")
     ContainerDb(reeferDB,"Reefer DB","DB2","Persist Reefer Containers data and states")
+    ContainerDb(orderDB,"Order DB","DB2","Persist Reefer Containers data and states")
   
     Container(message_bus, "Message Bus", "Kafka", "Transport for business events")
 
     Container(cold_chain_monitoring,"Cold Chain Monitoring","Agent, Kafka Stream","Process Telemetries in real time")
-    Container(blockchain,"Blockchain","Blockchain API","Blockchain")
+   
     Container(optim,"Order and Reefer Container Optimization","CPLEX API","CPLEX")
     Container(maintenance_process,"Maintenance Process","BPM","Business process to track reefer container maintenance")
     Container(watson_ml,"Anomaly detection scoring","Watson ML","Anomaly detection scoring")
     Container(vaccine_mgr,"Vaccine Mgr","Java,Quarkus","Microservice managing Vaccine entities")
-    Container(openscale,"Watson OpenScale","Watson OpenScale","Model drift monitoring")
-    Container(dashboard,"Dashboard","Watson Dashboard","Bias monitoring")
-
 }
 Rel(VaccineCoordinator,app,"Create orders","HTTPS")
 Rel(ManufacturerMgr,app,"Initiates Lots release","HTTPS")
 Rel(app,orderms,"Uses", "HTTPS")
-Rel(VaccineCoordinator,maintenance_process,"Process refrigerator maintenance","HTTPS")
 Rel(app,reefers_mgr,"Uses", "HTTPS")
 Rel(app,vaccine_mgr,"Uses", "HTTPS")
+Rel(orderms,message_bus,"Publish order events","TCP,Kafka")
+Rel(orderms,orderDB,"Save orders","JDBC")
 Rel(vaccine_mgr,vaccineDB,"Persists Vaccine data","JDBC")
 Rel(reefers_mgr,reeferDB,"Persists reefers to","JDBC")
 
-Rel(message_bus, vaccine_mgr, "Subscribes to raw material events","HTTPS,Kafka")
-Rel(vaccine_mgr,message_bus, "Publishes vaccine lot events","HTTPS,Kafka")
-Rel(orderms,optim,"Scedules container allocation","HTTPS")
-Rel(message_bus, reefers_mgr, "Subscribes to vaccine events","HTTPS,Kafka")
-Rel(message_bus,cold_chain_monitoring,"Subscribes telemetries","HTTPS,Kafka")
+Rel(message_bus, vaccine_mgr, "Subscribes to raw material events","TCP,Kafka")
+Rel(vaccine_mgr,message_bus, "Publishes vaccine lot events","TCP,Kafka")
+Rel(message_bus,optim,"Consumer lot, orders, reefer events")
+Rel(message_bus, reefers_mgr, "Subscribes to vaccine events","TCP,Kafka")
+Rel(message_bus,cold_chain_monitoring,"Subscribes telemetries","TCP,Kafka")
 Rel(cold_chain_monitoring,reefers_mgr,"Notifies","Events")
 Rel(cold_chain_monitoring,watson_ml,"Delegates","HTTPS")
-Rel(reefers_mgr,blockchain,"Delegates","HTTPS")
 Rel(reefers_mgr,maintenance_process,"Triggers","HTTPS")
-Rel(reefer, message_bus,"Sends telemetries","HTTPS,Kafka")
-Rel(openscale,watson_ml,"Monitors drift","HTTPS")
-Rel(dashboard,openscale,"Monitors drift","HTTPS")
+Rel(reefer, message_bus,"Sends telemetries","TCP,Kafka")
+Rel(VaccineCoordinator,maintenance_process,"Process refrigerator maintenance","HTTPS")
 
 @enduml
