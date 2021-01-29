@@ -18,10 +18,12 @@
       path: /design/comp-view/
     - title: Vaccine Order & Reefer Optimization
       path: /design/voro/
-    - title: Anomaly detection with CP for Data
+    - title: Anomaly Detection with CP for Data
       path: /solution/cp4d/
-    - title: Define the anomaly detection scoring model with Watson Studio
+    - title: Define the Anomaly Detection Scoring Model with Watson Studio
       path: /analyze/ws-ml-dev/
+    - title: Anomaly Detection from Streaming Events
+      path: /solution/cp4d/async/
     - title: Model Lifecycle Governance
       path: /solution/cp4d/mdlc/
 - title: Solution Anatomy
