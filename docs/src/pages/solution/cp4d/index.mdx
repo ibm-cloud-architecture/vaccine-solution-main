@@ -21,8 +21,6 @@ Here we are assuming the Data is available in a DB2 relational store and accessi
 
   ![3](./images/data-refinery.png)
   
-Another popular date sources or data connection is streaming data from other streaming data platform, like IBM Event Stream in Cloud Pak For Integration.
-
 The Model Developer, the Data Scientist, can access the Data in Data Refinery and at first Profile the Data. 
 
 After that she needs to decide how to define Anomaly. In this type of cases, a typical way to define anomaly is based on difference in Target Temperature and Actual Temperature. If that difference is high then it signifies that the Control system is not working as needed. 
@@ -55,3 +53,7 @@ The deployed Model can then further be monitored using Open Scale of Cloud Pak F
 For example  Whether a prediction is based on the time the doors were open, concentration of CO2, or based on Defrost cycle. Also is there any Drift in Input Data (the concentration of fluids, time doors are open, defrost cycle, etc) over a period of time w.r.t the training data (historical value). All these inputs can further help in taking any decision on what to do in such situations.
  
 Cloud Pak for data makes the data ready in days and ensures that the data scientists can use their tooling of preference whose security is ensured by IBM using Watson Studio.  Business can have the confidence to know what were the factors and data used by the model to make a decision.
+
+Another popular date sources or data connection is streaming data from other streaming data platform, like IBM Event Stream in Cloud Pak For Integration.
+
+![3](./images/eventStream.jpg)
