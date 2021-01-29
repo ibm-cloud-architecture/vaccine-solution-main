@@ -23,7 +23,7 @@
     - title: Define the Anomaly Detection Scoring Model with Watson Studio
       path: /analyze/ws-ml-dev/
     --title: Event Stream connection
-      path: /solution/cp4d/eventStream
+      path: /solution/cp4d/eventStream/
     - title: Anomaly Detection from Streaming Events
       path: /solution/cp4d/async/
     - title: Model Lifecycle Governance
