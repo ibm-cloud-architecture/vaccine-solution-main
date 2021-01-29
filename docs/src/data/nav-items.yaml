@@ -22,6 +22,8 @@
       path: /solution/cp4d/
     - title: Define the anomaly detection scoring model with Watson Studio
       path: /analyze/ws-ml-dev/
+    - title: Model Lifecycle Governance
+      path: /solution/cp4d/mdlc/
 - title: Solution Anatomy
   pages:
     - title: Getting Started
