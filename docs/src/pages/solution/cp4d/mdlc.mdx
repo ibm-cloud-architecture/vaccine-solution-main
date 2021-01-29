@@ -1,9 +1,22 @@
 ---
 title: IBM Cloud Pak for Data - Model Lifecycle Governance
-description: IBM Cloud Pak for Data - Model Lifecycle Governance
+description: IBM Cloud Pak for Data - Model Lifecycle Governance using OpenPages
 ---
 
 Now we shall show how various components of Cloud Pak For Data can be used to govern and manage the Model Lifecycle. 
+
+Managing Model's lifecycle with a proper Governance workflow is key to reliability of such mission critical solution. The components like OpenPages, Watson Knowledge Catalog, and Wayson OpenScale can be used to achieve the same.
+
+Model Lifecycle (MDLC) can be defined using OpenPages with gates for manual/Automated approvals at various stages of MDLC. For example - 
+
+a) Proposal stage - The type of algorithms and data sources to be used can be verified by appropriate SMEs
+b) Development stage - After the Model is developed independent validation of the Model can be done by separate team using OpenScale
+c) Deployment Stage - Before production deployment any additional validation can be added by Business team and appropriate Monitoring measures can be established
+d) Change Management - Based on Monitored metrics upgrading to new version or decommisioing of the Model can be initiated with controlled Change Management
+
+All assets related to the Model can be govered in a single Catalog using Watson Knwledge Catalog.
+
+The diagram below shows how OpenPages can help in managing MDLC of various models those are in different stages of MDLC with appropriate manual intervention.
 
  ![1](./images/cp4d-mdlc.png)
 
