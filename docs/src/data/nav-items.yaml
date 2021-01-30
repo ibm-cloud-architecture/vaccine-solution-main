@@ -40,6 +40,8 @@
       path: /solution/orderms/voro-solution/
     - title: Reefer IoT Simulator
       path: /solution/reefer-iot/
+    - title: Model Development for Cold Chain Anomaly prediction
+      path: /solution/cpd/mdlc-anatomy
     - title: Cold Chain Monitoring
       path: /solution/cold-monitoring/
     - title: Blockchain
