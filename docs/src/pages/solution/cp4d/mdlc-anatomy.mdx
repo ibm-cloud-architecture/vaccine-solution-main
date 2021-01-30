@@ -18,36 +18,36 @@ Role - ModelManager
 
 Role - ModelOwner
 
-f. Login to OpenPages. Go to the Model. Review the Model Deatils
-g. Change the model status to Approved for Data Acquisition. Save the Model Workflow.
+6. Login to OpenPages. Go to the Model. Review the Model Deatils
+7. Change the model status to Approved for Data Acquisition. Save the Model Workflow.
 
 __Step 2 : Data Acquizition, Feature Engineering and Model Development__
 
 Role - ModelDataEnginner
 
-a. Login to OpenPages. Get Model details. Get Catalog name. Get Data Asset name.
-b. Create a Analytics Project in Cloud Pak For Data
-c. To the project add the Notebook provided for acquiring Data from Kafka in Clous Pak For Integration
-d. Run the Notebook. It will generate the data in a csv file. 
-e. Publish the CSV file to Catalog designated for the Model - give the Data Asset an appropriate name. Also publish the Notebook to the Catalog.
-f. Go to the OpenPages. Update the name of the Raw Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Data Acquisition Completed.
+1. Login to OpenPages. Get Model details. Get Catalog name. Get Data Asset name.
+2. Create a Analytics Project in Cloud Pak For Data
+3. To the project add the Notebook provided for acquiring Data from Kafka in Clous Pak For Integration
+4. Run the Notebook. It will generate the data in a csv file. 
+5. Publish the CSV file to Catalog designated for the Model - give the Data Asset an appropriate name. Also publish the Notebook to the Catalog.
+6. Go to the OpenPages. Update the name of the Raw Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Data Acquisition Completed.
 
 Role - ModelOwner
 
-g. Login to OpenPages. Go to the Model. Check the name of the Data Asset for model development. Go to the Catalog. Review the Raw Data Asset.
-h. Change the model status to Approved for Feature Engineering. Save the Model Workflow.
+7. Login to OpenPages. Go to the Model. Check the name of the Data Asset for model development. Go to the Catalog. Review the Raw Data Asset.
+8. Change the model status to Approved for Feature Engineering. Save the Model Workflow.
 
 Role - ModelDeveloper
 
-a. Login to OpenPages. Get Model details. Get Catalog name.
-b. Create a Analytics Project in Cloud Pak For Data
-c. To the project add the Data Asset from the Catalog. 
-d. Use Refinery to do the feature engineering as provided in the Solution section. Add the Anomaly Flag. Alyternatively one can use Notebooks or SPSS Modleer for the Feature Engineering.
-e. Publish the Feature Engineered Data to Catalog. Give the Data Asset an appropriate name and tag it appropriately. Also publish the Data Refinery Flow (export from project and import as data asset) to the Catalog.
-f. Go to the OpenPages. Update the name of the Featured Engineered Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Feature Engineering Completed.
+9. Login to OpenPages. Get Model details. Get Catalog name.
+10. Create a Analytics Project in Cloud Pak For Data
+11. To the project add the Data Asset from the Catalog. 
+12. Use Refinery to do the feature engineering as provided in the Solution section. Add the Anomaly Flag. Alyternatively one can use Notebooks or SPSS Modleer for the Feature Engineering.
+13. Publish the Feature Engineered Data to Catalog. Give the Data Asset an appropriate name and tag it appropriately. Also publish the Data Refinery Flow (export from project and import as data asset) to the Catalog.
+14. Go to the OpenPages. Update the name of the Featured Engineered Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Feature Engineering Completed.
 
 Role - ModelOwner
 
-g. Login to OpenPages. Go to the Model. Check the name of the Feature Engineered Data Asset for model development. Go to the Catalog. Review the Data Asset
-h. Change the model status to Approved for Development. Save the Model Workflow.
+15. Login to OpenPages. Go to the Model. Check the name of the Feature Engineered Data Asset for model development. Go to the Catalog. Review the Data Asset
+16. Change the model status to Approved for Development. Save the Model Workflow.
 
