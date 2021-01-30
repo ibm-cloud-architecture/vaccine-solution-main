@@ -65,3 +65,19 @@ Role - ModelOwner
 15. Login to OpenPages. Go to the Model. Check the name of Model Asset. Go to the Catalog. Review the Model Data Asset
 16. Change the model status to Approved for Validation. Save the Model Workflow.
 
+Role - ModelValidator
+
+17. Login to OpenPages. Get Model details. Get Catalog name. Get Model Asset name.
+18. Create a Analytics Project in Cloud Pak For Data for Model Validation.
+19. To the project add the Model Asset from the Catalog. 
+20. Create a Deployment Space for deploying the model for Validation. Associate the Deployment Space to the Validation Project. Ptomote Model Asset from project to that Deployment Space.
+21. Create Online Deployment of the Model. Configure the Deployment in OpenScale for Validation using pre-production deployment space. 
+22. Create a Validation Dataset. Use the same in OpenScale to validate the Model. Generate the Validation Report from OpenScale.
+13. Publish the Validation Data Asset to Catalog. Download Model Validation Report and upload the same to Catalog. 
+14. Go to the OpenPages. Update the name of the Validation Data Asset published to the Catalog to the appropriate field of the Catalog. Also update the name of the Validation Report. Change the Model Status to Model Validation Completed.
+
+Role - ModelOwner
+
+15. Login to OpenPages. Go to the Model. Check the name of Validation Data Asset and Validation Repor. Go to the Catalog. Review those assets.
+16. Change the model status to Approved for Deployment. Save the Model Workflow.
+
