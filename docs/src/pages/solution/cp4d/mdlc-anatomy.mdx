@@ -12,41 +12,41 @@ Role - ModelManager
 a. Login to OpenPages. Create a Model in OpenPages and assign it Proposed stage
 b. Provide Description with Model's details. Additional Description with Model purpose, Data Sources to be used. 
 c. Select Yes for the fields Machine Learning Model, Monitored With OpenScale. Select Yes for Usability Status
-d. Createa a Catalog for the model in Watson Knowledge Catalog. Provide the name and link of the Catalog in the respective fields.
-e. Save the Model
+d. Create a Catalog for the model in Watson Knowledge Catalog. Provide the name and link of the Catalog in the respective fields.
+e. Save the Model Workflow.
 
 Role - ModelOwner
 
 f. Login to OpenPages. Go to the Model. Review the Model Deatils
-g. Change the model status to Approved for Data Acquisition. Save the Model
+g. Change the model status to Approved for Data Acquisition. Save the Model Workflow.
 
 __Step 2 : Data Acquizition, Feature Engineering and Model Development__
 
 Role - ModelDataEnginner
 
-a. Login to OpenPages. Get Model details. Get Catalog name.
+a. Login to OpenPages. Get Model details. Get Catalog name. Get Data Asset name.
 b. Create a Analytics Project in Cloud Pak For Data
 c. To the project add the Notebook provided for acquiring Data from Kafka in Clous Pak For Integration
 d. Run the Notebook. It will generate the data in a csv file. 
 e. Publish the CSV file to Catalog designated for the Model - give the Data Asset an appropriate name. Also publish the Notebook to the Catalog.
-f. Go to the OpenPages. Update the name of the Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Data Acquisition Done.
+f. Go to the OpenPages. Update the name of the Raw Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Data Acquisition Completed.
 
 Role - ModelOwner
 
-g. Login to OpenPages. Go to the Model. Check the name of the Data Asset for model development. Go to the Catalog. Review the Data Asset
-h. Change the model status to Approved for Feature Engineering. Save the Model.
+g. Login to OpenPages. Go to the Model. Check the name of the Data Asset for model development. Go to the Catalog. Review the Raw Data Asset.
+h. Change the model status to Approved for Feature Engineering. Save the Model Workflow.
 
 Role - ModelDeveloper
 
 a. Login to OpenPages. Get Model details. Get Catalog name.
 b. Create a Analytics Project in Cloud Pak For Data
-c. To the project add the Notebook provided for acquiring Data from Kafka in Clous Pak For Integration
-d. Run the Notebook. It will generate the data in a csv file. 
-e. Publish the CSV file to Catalog designated for the Model - give the Data Asset an appropriate name. Also publish the Notebook to the Catalog.
-f. Go to the OpenPages. Update the name of the Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Data Acquisition Done.
+c. To the project add the Data Asset from the Catalog. 
+d. Use Refinery to do the feature engineering as provided in the Solution section. Add the Anomaly Flag. Alyternatively one can use Notebooks or SPSS Modleer for the Feature Engineering.
+e. Publish the Feature Engineered Data to Catalog. Give the Data Asset an appropriate name and tag it appropriately. Also publish the Data Refinery Flow (export from project and import as data asset) to the Catalog.
+f. Go to the OpenPages. Update the name of the Featured Engineered Data Asset published to the Catalog to the appropriate field of the Catalog. Change the Model Status to Feature Engineering Completed.
 
 Role - ModelOwner
 
-g. Login to OpenPages. Go to the Model. Check the name of the Data Asset for model development. Go to the Catalog. Review the Data Asset
-h. Change the model status to Approved for Feature Engineering. Save the Model.
+g. Login to OpenPages. Go to the Model. Check the name of the Feature Engineered Data Asset for model development. Go to the Catalog. Review the Data Asset
+h. Change the model status to Approved for Development. Save the Model Workflow.
 
