@@ -34,7 +34,7 @@
       path: /solution/cp4d/
     - title: Data Collection from Event Stream in Cloud Pak For Integration
       path: /solution/cp4d/eventStream/
-    - title: Define the Anomaly Detection Scoring Model with Watson Studio
+    - title: Developing the Anomaly Detection Model with Watson Studio
       path: /analyze/ws-ml-dev/
     - title: Model Lifecycle Governance
       path: /solution/cp4d/mdlc/
