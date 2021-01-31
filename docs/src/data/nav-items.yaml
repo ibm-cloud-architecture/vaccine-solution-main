@@ -18,16 +18,6 @@
       path: /design/comp-view/
     - title: Vaccine Order & Reefer Optimization
       path: /design/voro/
-    - title: Anomaly Detection with CP for Data
-      path: /solution/cp4d/
-    - title: Define the Anomaly Detection Scoring Model with Watson Studio
-      path: /analyze/ws-ml-dev/
-    - title: Data Collection from Event Stream in Cloud Pak For Integration
-      path: /solution/cp4d/eventStream/
-    - title: Anomaly Detection from Streaming Events
-      path: /solution/cp4d/async/
-    - title: Model Lifecycle Governance
-      path: /solution/cp4d/mdlc/
 - title: Solution Anatomy
   pages:
     - title: Getting Started
@@ -44,8 +34,16 @@
       path: /solution/cp4d/mdlc-anatomy/
     - title: Cold Chain Monitoring
       path: /solution/cold-monitoring/
-    - title: Blockchain
-      path: /solution/blockchain/
+    - title: Anomaly Detection with CP for Data
+      path: /solution/cp4d/
+    - title: Define the Anomaly Detection Scoring Model with Watson Studio
+      path: /analyze/ws-ml-dev/
+    - title: Data Collection from Event Stream in Cloud Pak For Integration
+      path: /solution/cp4d/eventStream/
+    - title: Anomaly Detection from Streaming Events
+      path: /solution/cp4d/async/
+    - title: Model Lifecycle Governance
+      path: /solution/cp4d/mdlc/
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
 - title: Use cases

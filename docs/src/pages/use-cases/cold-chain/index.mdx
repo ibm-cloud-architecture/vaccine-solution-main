@@ -9,10 +9,20 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 ## Components involved in this use case
 
-* [Vaccine Reefer Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
-* [Vaccine Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
+* [Vaccine Refrigerator container Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
+* [Vaccine Reefer Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
 * [IBM Event Streams](https://ibm.github.io/event-streams/)
-* WatsonML-based anomaly detection microservice
+* [Anomaly detection scoring service](/analyze/ws-ml-dev/) with WatsonML and anomaly detection built in Cloud Pak for Data
+
+![](./images/cc-components.png)
+
+*The reefer manager is not done yet*
+
+## Understand the components
+
+* The Reefer simulator is a python  Flask app, which supports simple API to control the Refrigerator container simulation . It is described in [this note](/solution/reefer-iot/), also see next section to deploy it on OpenShift.
+* The Monitoring Agent is a Quarkus app, with Kafka Streams, reactive messaging to monitor the cold chain with stateful operations. It also call the Anomaly detection service. Implementation details can be read in [this note](/solution/cold-monitoring/).
+* The model to assess if the refrigerator container has issue. To develop the model we need to [get the telemetry data](/solution/cp4d/) in Cloud Pak for data, and then perform feature engineering and use AutoAI for developing the model as described in [this note](/analyze/ws-ml-dev/). As an alternate to collect the data, it is possible to directly [integrate with Kafka topic](/solution/cp4d/eventStream/) and then save then as csv or in a datalake.
 
 ## Run on OpenShift
 
@@ -31,6 +41,8 @@ The solution for this use case includes streaming telemetry events, a stateful m
 5. [jq](https://stedolan.github.io/jq/) on your local environment.
 
 ### Deploy the Vaccine Reefer Simulator
+
+To get more detail of this Python Flask application [read this note](/solution/reefer-iot/).
 
 1. Ensure you are working inside the correct project via the following `oc` command:
 
@@ -70,7 +82,7 @@ The solution for this use case includes streaming telemetry events, a stateful m
 5. Copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | oc apply -f -
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
    - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
 
@@ -80,14 +92,41 @@ The solution for this use case includes streaming telemetry events, a stateful m
   oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/app-deployment.yaml
   ```
 
+  You can verify the deployment state with the following:
+
+  ```shell
+  oc get pods -w
+  ```
+
+or the via the Openshift console:
+
+![2](./images/simul-app-ocp.png)
+
+
 ### Deploy the Vaccine Monitoring Agent
+
+To get more detail of this Java Quarkus microprofile application [read this note](/solution/cold-monitoring/). The project repository is [https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
+
 
 1. Ensure you are working inside the correct project via the following `oc` command:
 
   ```shell
   oc project coldchain
   ```
+ 
+1. If not done so already, copy the server-side public certificate of the Event Streams instance to your local project:
 
+  ```shell
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | oc apply -f -
+  ```
+   - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
+
+1. Copy your TLS-based KafkaUser's credentials to the local namespace with the following `oc` command:
+
+  ```shell
+  oc get secret -n eventstreams ${TLS_USER} -o json --export | jq -r '.metadata.name="kafka-user"' | oc apply -f -
+  ```
+    - Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents.
 2. Export the value of your Event Streams cluster name and TLS-based KafkaUser into environment variables:
 
   ```shell
@@ -96,36 +135,62 @@ The solution for this use case includes streaming telemetry events, a stateful m
   export YOUR_SUFFIX=___a_unique_identifier_for_your_application___
   ```
 
-3. Create a ConfigMap named `agent-cm` with the following `oc` command:
+1. If you use the Anomaly detection service deployed in Watson ML:
 
-  ```shell
+   * Get user credential to access to cloud pack for data, with the API key.
+   * Get the ANOMALY_DETECTION_URL
+   * Get the CP4D_AUTH_URL used to get access token
+
+  You will use those values in the config map of this application.
+
+3. Create a ConfigMap named `agent-cm` (see exising one [here](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent/blob/master/src/main/kubernetes/configmap.yaml)) with the following `oc` command:
+
+ ```shell
+  # USE this if you do not use the anomaly detection service
+  oc create configmap agent-cm \
+  --from-literal=KAFKA_USER=app-tls \
+  --from-literal=reefer-topic=coldchain-reefers \
+  --from-literal=telemetry-topic=coldchain-telemetry \
+  --from-literal=KAFKA_BOOTSTRAP_SERVERS=${CLUSTER_NAME}-kafka-bootstrap.eventstreams.svc:9093 \
+  --from-literal=QUARKUS_KAFKA_STREAMS_APPLICATION_ID=cold-chain-agent-${YOUR_SUFFIX} \
+  --from-literal=KAFKA_SASL_MECHANISM=SCRAM-SHA-512 \
+  --from-literal=KAFKA_SECURITY_PROTOCOL=SASL_SSL
+  # USE the command below if you USE the anomaly detection service
   oc create configmap agent-cm \
   --from-literal=reefer-topic=coldchain-reefers \
   --from-literal=telemetry-topic=coldchain-telemetry \
-  --from-literal=kafka-brokers=${CLUSTER_NAME}-kafka-bootstrap.eventstreams.svc:9093
-  --from-literal=consumer-group=cold-chain-agent-${YOUR_SUFFIX}
-  ```
-   - The value of `telemetry-topic` should match the value used in the creation of the `reefer-simul-cmap` ConfigMap above.
+  --from-literal=KAFKA_BOOTSTRAP_SERVERS=${CLUSTER_NAME}-kafka-bootstrap.eventstreams.svc:9093 \
+  --from-literal=QUARKUS_KAFKA_STREAMS_APPLICATION_ID=cold-chain-agent-${YOUR_SUFFIX} \
+  --from-literal=KAFKA_SASL_MECHANISM=SCRAM-SHA-512 \
+  --from-literal=KAFKA_SECURITY_PROTOCOL=SASL_SSL \
+  --from-literal=CP4D_AUTH_URL=  \
+  --from-literal=CP4D_USER: <cp4d user> \
+  --from-literal=CP4D_AUTH_URL: \
+  --from-literal=PREDICTION_ENABLED=true
 
-4. If not done so already, copy the server-side public certificate of the Event Streams instance to your local project:
+ ```
+
+  The value of `telemetry-topic` should match the value used in the creation of the `reefer-simul-cmap` ConfigMap above.
+
+4. Define a secret with:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | oc apply -f -
+  oc create secret generic reefer-simul-secret \
+  --from-literal=ANOMALY_DETECTION_URL=https://zen-cpd-ze.../predictions?version=2021-01-28 \
+  --from-literal=KAFKA_USER=app-tls \
+  --from-literal=KAFKA_PASSWORD=... \
+    CP4D_USER: jboyer
+    CP4D_APIKEY: YdnIRC3WnuBziDvq98J00t4Crq8BtwsixwtKiALa
+    CP4D_AUTH_URL: https://zen-cpd-zen.apps.cpdv35-swat.cpd-daell.com/icp4d-api/v1/authorize
   ```
-   - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
-
-5. Copy your TLS-based KafkaUser's credentials to the local namespace with the following `oc` command:
-
-  ```shell
-  oc get secret -n eventstreams ${TLS_USER} -o json --export | jq -r '.metadata.name="kafka-user"' | oc apply -f -
-  ```
-    - Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents.
 
 6. Deploy the microservice components via the following `oc apply` command:
 
   ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/app-deploy.yaml
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/openshift.yaml
   ```
+
+  *The openshift.yaml is, in fact created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for conveniance.* 
 
 ## Scenario script
 
@@ -145,7 +210,7 @@ Once the solution is up and running, execute the following steps to present an e
     * **containerID**: `C01`
     * **nb_of_records**: `500`
     * **product_id**: `covid-19`
-    * **simulation**: `poweroff`
+    * **simulation**: `temperature`
 
 4. Click **Execute**.
 
