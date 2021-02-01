@@ -57,25 +57,36 @@ AutoAI will do different steps, split the data, prepare data, and then select mo
 
 ![autoai](images/autoai-1.png)
 
+
+Each model pipeline is scored for a variety of metrics and then ranked. The default ranking metric for binary classification models is the area under the ROC curve, for multi-class classification models is accuracy, and for for regression models is the root mean-squared error (RMSE). The highest-ranked pipelines are displayed in a leaderboard, so you can view more information about them. The leaderboard also provides the option to save select model pipelines after reviewing them.
+
+![autoai](images/a_Autoai_2.png)
+
 The resulting experiments are ranked.
 
 ![autoai](images/autoai-2.png)
 
 When models or pipelines are created, we can see the details of each model, to see how they performed.
 
-![model-evaluation](images/model-evaluation.png)
+
+
+
 
 The confusion matrix for the experiment ranked #1:
 
-![confusion-matrix](images/confusion-matrix.png)
+![confusion-matrix](images/a_Confution Matrix_1.png)
 
 The tool offers nice capabilities like the feature transformation:
 
-![feature-transform](images/feature-transform.png)
+![feature-transform](images/a_Feature Transformation_1.png)
 
 And the feature importance ranking, which helps to assess what are the features that impact the classification.
 
-![feature-importance](images/feature-importance.png)
+![feature-importance](images/a_Feature Importance_1.png)
+
+Depending upon the accuracy or performance the best model can be selected and saved 
+
+![feature-importance](images/a_model save_1.png)
 
 Once the model is saved, it can be added to a Catalog, and then being deployed.
 
