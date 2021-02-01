@@ -10,5 +10,6 @@ description: Code repository map for easy navigation
 
 ## Cold chain monitoring
 
-* [Refrigerator monitoring to assess cold chain and anomaly detection](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
+* [Refrigerator monitoring to assess cold chain and anomaly detection](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent): this is a quarkus app, with microprofile and reactive messaging. It use Kafka Streams with Ktable, interactive query to compute the mumber of temperature violation per container. It optionally calls the anomaly detection model deployed on Watson ML.
+ 
 * [Simulate Refrigerator telemetries](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator). The simulator component is a Python-based application for generating anomalous data events for refrigerated containers. It is controlled by a REST API for triggering the cold chain demo.
