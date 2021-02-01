@@ -21,11 +21,12 @@ and then clean and shape the data to prepare for the model. For example remove c
 
 ![Remove columns](images/remove-column.png)
 
-To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using two thresholds: test the value of the O2 to be less then a threshold (11) with a second condition on the CO2 to be greater than another threshold (12):
+To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using two thresholds: test the value of the CO2 to be greater than or equal to threshold (22):
 
-![Define condition](images/anomaly-flag-1.png)
+![Define condition](images/a_anomally_def_1.png)
 
-We add the new label (Issue, NoIssue) in the Anomaly Flag column:
+
+We add the new label (Issue =1, NoIssue=0) in the Anomaly Flag column:
 
 ![To add column](images/anomaly-flag-2.png)
 
