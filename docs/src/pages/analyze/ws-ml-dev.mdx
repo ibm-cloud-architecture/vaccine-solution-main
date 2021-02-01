@@ -21,19 +21,21 @@ and then clean and shape the data to prepare for the model. For example remove c
 
 ![Remove columns](images/remove-column.png)
 
-To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using two thresholds: test the value of the O2 to be less then a threshold (11) with a second condition on the CO2 to be greater than another threshold (12):
+To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using one thresholds: test the value of the CO2 to be greater than or equal to threshold (22):
 
-![Define condition](images/anomaly-flag-1.png)
+![Define condition](images/a_anomally_def_1.png)
 
-We add the new label (Issue, NoIssue) in the Anomaly Flag column:
 
-![To add column](images/anomaly-flag-2.png)
+We add the new label (Issue =1, NoIssue=0) in the Issue Flag column:
 
-Which translates to something like: "Replaced values for AnomalyFlag: CARBON_DIOXIDE_LEVEL where value is greater than 12 as 'Issue', OXYGEN_LEVEL where value is less than 12 as 'Issue'. Replaced all remaining values with 'NoIssue'."
+Which translates to something like:
+"Replaced values for Issue: carbon_dioxide_level where value is greater than or equal to 22 as 1. Replaced all remaining values with 0."
+
 
 Once the label column is added, and any new derived data are added, we can start a `refinery job`, that will create a new dataset in our project:
 
-![Refinery job](images/refinery-job.png)
+![Refinery job](images/a_dr_job_1.png)
+
 
 ## AutoAI
 
@@ -47,9 +49,9 @@ Then specify a name and server configuration:
 
 ![Auto AI Experiment name](images/autoai-experiment-2.png)
 
-Add a existing data source (the one prepared by the refinery job), and then specify the column to use for prediction (AnomalyFlag column):
+Add a existing data source (the one prepared by the refinery job), and then specify the column to use for prediction (Issue Flag column):
 
-![](images/autoai-class-column.png)
+![](images/a_autoai_start_1.png)
 
 Then execute the prediction experiment.
 
@@ -57,17 +59,25 @@ AutoAI will do different steps, split the data, prepare data, and then select mo
 
 ![autoai](images/autoai-1.png)
 
+
+Each model pipeline is scored for a variety of metrics and then ranked. The default ranking metric for binary classification models is the area under the ROC curve, for multi-class classification models is accuracy, and for for regression models is the root mean-squared error (RMSE). The highest-ranked pipelines are displayed in a leaderboard, so you can view more information about them. The leaderboard also provides the option to save select model pipelines after reviewing them.
+
+![autoai](images/a_Autoai_2.png)
+
 The resulting experiments are ranked.
 
 ![autoai](images/autoai-2.png)
 
 When models or pipelines are created, we can see the details of each model, to see how they performed.
 
-![model-evaluation](images/model-evaluation.png)
+![model-evaluation](images/a_model_evaluation_1.png)
+
 
 The confusion matrix for the experiment ranked #1:
 
-![confusion-matrix](images/confusion-matrix.png)
+
+![confusion-matrix](images/a_Confution_Matrix_1.png)
+
 
 The tool offers nice capabilities like the feature transformation:
 
