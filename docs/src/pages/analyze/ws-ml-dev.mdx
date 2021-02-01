@@ -21,20 +21,20 @@ and then clean and shape the data to prepare for the model. For example remove c
 
 ![Remove columns](images/remove-column.png)
 
-To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using two thresholds: test the value of the CO2 to be greater than or equal to threshold (22):
+To define a new column to be used as label, we use the `Operation` tab to add `Conditional replace` to apply some basic logic on the sensor columns by using one thresholds: test the value of the CO2 to be greater than or equal to threshold (22):
 
 ![Define condition](images/a_anomally_def_1.png)
 
 
 We add the new label (Issue =1, NoIssue=0) in the Anomaly Flag column:
 
-![To add column](images/anomaly-flag-2.png)
+Which translates to something like:
+"Replaced values for Issue: carbon_dioxide_level where value is greater than or equal to 22 as 1. Replaced all remaining values with 0."
 
-Which translates to something like: "Replaced values for AnomalyFlag: CARBON_DIOXIDE_LEVEL where value is greater than 12 as 'Issue', OXYGEN_LEVEL where value is less than 12 as 'Issue'. Replaced all remaining values with 'NoIssue'."
 
 Once the label column is added, and any new derived data are added, we can start a `refinery job`, that will create a new dataset in our project:
 
-![Refinery job](images/refinery-job.png)
+![Refinery job](images/a_dr_job_1)
 
 ## AutoAI
 
