@@ -1,6 +1,6 @@
 ---
-title: IBM Cloud Pak for Data - Model Lifecycle Governance
-description: IBM Cloud Pak for Data - Model Lifecycle Governance using OpenPages
+title: IBM Cloud Pak for Data - Model Lifecycle with Governance for Developing Machine Learning Model
+description: IBM Cloud Pak for Data - Model Lifecycle with Governance for Developing Machine Learning Model
 ---
 
 In this section we have the step by step guidance on how to develop and deploy a model using a simple Model Development Lifecycle Workflow with Governance in Cloud Pak For Data. We show here a very basic workflow. The workflow can be made as complex as needed with sub-workflow with more manual and system controlled gates as needed by a customer.
@@ -21,11 +21,17 @@ __Prerequisites__
 The steps in the diagram below would be executed in the rest of the instructions in this section.
 
  ![1](./images/ModelOps-2.png)
+ 
+ 
+ The Components of Cloud Pak For Data used for this are in the diagram below.
+
+ ![1](./images/CoreNerStonesMLOps.png)
+ 
 
 __Step 1 : Initiate Model Development Lifecycle__
 
 
-Role - ModelManager
+Role - ModelOwner
 
 1. Login to OpenPages. Create a Model in OpenPages and assign it Proposed stage
 2. Provide Description with Model's details. Additional Description with Model purpose, Data Sources to be used. 
@@ -33,7 +39,7 @@ Role - ModelManager
 4. Create a Catalog for the model in Watson Knowledge Catalog. Provide the name and link of the Catalog in the respective fields.
 5. Save the Model Workflow.
 
-Role - ModelOwner
+Role - ModelReviewer
 
 6. Login to OpenPages. Go to the Model. Review the Model Deatils
 7. Change the model status to Approved for Data Acquisition. Save the Model Workflow.
