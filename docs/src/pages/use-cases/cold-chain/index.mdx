@@ -61,6 +61,12 @@ To get more detail of this Python Flask application [read this note](/solution/r
   ```shell
   export CLUSTER_NAME=development
   ```
+   * To check what the name of your Event Streams cluster name is do:
+   ```shell
+   $ oc get eventstreams -n <YOUR_EVENT_STREAMS_NAMESPACE>
+   NAME           STATUS
+   development    Ready
+   ```
 
 3. Create a ConfigMap named `reefer-simul-cm` with the following `oc` command:
 
@@ -73,7 +79,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
    - Replacing the value of `KAFKA_BROKERS` above with the **External** cluster bootstrap address presented to you during the creation of your SCRAM-based KafkaUser.
    - This value can be accessed via the following `oc` command:
     ```shell
-    oc get route -n eventstreams ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443"
+    oc get route -n <YOUR_EVENT_STREAMS_NAMESPACE> ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443"
     ```
 
 4. Create a Secret named `reefer-simul-secret` with the following `oc` command:
@@ -84,12 +90,21 @@ To get more detail of this Python Flask application [read this note](/solution/r
   --from-literal=KAFKA_PASSWORD=___your-scram-based-kafka-user-password___
   ```
    - Replacing the values above with the values generated during the creation of your SCRAM-based KafkaUser.
-   - If you need to get the password do the following command: `oc get secret app-scram -n eventstreams -o jsonpath='{.data.password}' && echo ""`
+   - If you need to get the password do the following command:
+   ```shell
+   oc get secret <YOUR_KAFKAUSER_NAME> -n <YOUR_EVENT_STREAMS_NAMESPACE> -o jsonpath='{.data.password}' && echo ""
+   ```
+   - If you dont remember the name of your KafkaUser when you created the SCRAM credentials:
+   ```shell
+   $ oc get kafkausers -n integration
+   NAME                CLUSTER         AUTHENTICATION   AUTHORIZATION
+   app-scram           development     scram-sha-512    simple
+   ```
 
 5. Copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n <YOUR_EVENT_STREAMS_NAMESPACE> -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
    - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
    - You should have two secrets.
@@ -130,17 +145,24 @@ To get more detail of this Java Quarkus microprofile application [read this note
 1. If not done so already, copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n eventstreams --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n <YOUR_EVENT_STREAMS_NAMESPACE> --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
    - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
 
 1. Copy your TLS-based KafkaUser's credentials to the local namespace with the following `oc` command:
 
   ```shell
-  oc get secret -n eventstreams ${TLS_USER} -o json | jq -r '.metadata.name="${TLS_USER}"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret -n <YOUR_EVENT_STREAMS_NAMESPACE> ${TLS_USER} -o json | jq -r '.metadata.name="${TLS_USER}"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
     - Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents.
-2. Export the value of your Event Streams cluster name and TLS-based KafkaUser into environment variables. The tls-based-kafka-user-name is our previous setting is `kafka-tls-user`, if you changed this name, ensure it matches
+    - If you dont remember your tls Kafka User:
+    ```shell
+    $ oc get kafkausers -n integration
+    NAME                     CLUSTER         AUTHENTICATION   AUTHORIZATION
+    kafka-tls-user           development     tls              simple
+    ```
+
+1. Export the value of your Event Streams cluster name and TLS-based KafkaUser into environment variables. The tls-based-kafka-user-name is our previous setting is `kafka-tls-user`, if you changed this name, ensure it matches
 
   ```shell
   export CLUSTER_NAME=development
@@ -157,7 +179,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
 
   You will use those values in the secrets of this application.
 
-3. Create a ConfigMap named `agent-cm` (see exising one [here](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent/blob/master/src/main/kubernetes/configmap.yaml)) with the following `oc` command:
+1. Create a ConfigMap named `agent-cm` (see exising one [here](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent/blob/master/src/main/kubernetes/configmap.yaml)) with the following `oc` command:
 
  ```shell
   # USE this if you do not use the anomaly detection service
@@ -180,7 +202,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
 
   The value of `` should match the value used in the creation of the `reefer-simul-cmap` ConfigMap above. 
 
-4. Define a secret for the agent, according to the option you selected:
+1. Define a secret for the agent, according to the option you selected:
 
   ```shell
   # without anomaly detection
@@ -202,8 +224,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   --from-literal=CP4D_AUTH_URL: <cp4d API to get user token>\
   ```
 
-
-6. Deploy the microservice components. You have two choices depending of the fact you have cloned the repository or not.
+1. Deploy the microservice components. You have two choices depending of the fact you have cloned the repository or not.
 
   If you have clone the repository use:
 
@@ -214,7 +235,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   If not try this deployment config:
 
   ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/openshift.yaml
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/deployment.yml
   ```
 
   *The openshift.yaml is, in fact created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for conveniance and update the docker image to download the one from docker hub.* 
