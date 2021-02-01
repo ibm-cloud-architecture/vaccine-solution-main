@@ -53,17 +53,19 @@ To get more detail of this Python Flask application [read this note](/solution/r
 1. Ensure you are working inside the correct project via the following `oc` command:
 
   ```shell
-  oc project coldchain
+  export PROJECT_NAME=coldchain
+  oc project ${PROJECT_NAME}
   ```
 
 2. Export the value of your Event Streams cluster name into an environment variable:
 
   ```shell
   export CLUSTER_NAME=development
+  export EVENTSTREAMS_NS=eventstreams
   ```
    * To check what the name of your Event Streams cluster name is do:
    ```shell
-   $ oc get eventstreams -n <YOUR_EVENT_STREAMS_NAMESPACE>
+   $ oc get eventstreams -n ${EVENTSTREAMS_NS}
    NAME           STATUS
    development    Ready
    ```
@@ -73,13 +75,13 @@ To get more detail of this Python Flask application [read this note](/solution/r
   ```shell
   oc create configmap reefer-simul-cm \
   --from-literal=KAFKA_CERT=/app/certs/ca.crt \
-  --from-literal=KAFKA_MAIN_TOPIC=coldchain-telemetry \
+  --from-literal=KAFKA_MAIN_TOPIC=${PROJECT_NAME}-telemetry \
   --from-literal=KAFKA_BROKERS=___kafka-kafka-bootstrap-eventstreams.cluster.appdomain.cloud:443___
   ```
    - Replacing the value of `KAFKA_BROKERS` above with the **External** cluster bootstrap address presented to you during the creation of your SCRAM-based KafkaUser.
    - This value can be accessed via the following `oc` command:
     ```shell
-    oc get route -n <YOUR_EVENT_STREAMS_NAMESPACE> ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443"
+    oc get route -n ${EVENTSTREAMS_NS} ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443"
     ```
 
 4. Create a Secret named `reefer-simul-secret` with the following `oc` command:
@@ -92,7 +94,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
    - Replacing the values above with the values generated during the creation of your SCRAM-based KafkaUser.
    - If you need to get the password do the following command:
    ```shell
-   oc get secret <YOUR_KAFKAUSER_NAME> -n <YOUR_EVENT_STREAMS_NAMESPACE> -o jsonpath='{.data.password}' && echo ""
+   oc get secret <YOUR_KAFKAUSER_NAME> -n ${EVENTSTREAMS_NS} -o jsonpath='{.data.password}' && echo ""
    ```
    - If you dont remember the name of your KafkaUser when you created the SCRAM credentials:
    ```shell
@@ -104,7 +106,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
 5. Copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n <YOUR_EVENT_STREAMS_NAMESPACE> -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
    - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
    - You should have two secrets.
@@ -141,23 +143,23 @@ To get more detail of this Java Quarkus microprofile application [read this note
   ```shell
   oc project coldchain
   ```
- 
+
 1. If not done so already, copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
-  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n <YOUR_EVENT_STREAMS_NAMESPACE> --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} --export -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
    - Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents.
 
 1. Copy your TLS-based KafkaUser's credentials to the local namespace with the following `oc` command:
 
   ```shell
-  oc get secret -n <YOUR_EVENT_STREAMS_NAMESPACE> ${TLS_USER} -o json | jq -r '.metadata.name="${TLS_USER}"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret -n ${EVENTSTREAMS_NS} ${TLS_USER} -o json | jq -r '.metadata.name="${TLS_USER}"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
     - Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents.
     - If you dont remember your tls Kafka User:
     ```shell
-    $ oc get kafkausers -n integration
+    $ oc get kafkausers -n ${EVENTSTREAMS_NS}
     NAME                     CLUSTER         AUTHENTICATION   AUTHORIZATION
     kafka-tls-user           development     tls              simple
     ```
@@ -166,7 +168,6 @@ To get more detail of this Java Quarkus microprofile application [read this note
 
   ```shell
   export CLUSTER_NAME=development
-  export PROJECT_NAME=coldchain
   export TLS_USER=__your-tls-based-kafka-user-name__
   export YOUR_SUFFIX=___a_unique_identifier_for_your_application___
   ```
@@ -200,7 +201,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
 
  ```
 
-  The value of `` should match the value used in the creation of the `reefer-simul-cmap` ConfigMap above. 
+  The value of `TELEMETRY_TOPIC` should match the value used in the creation of the `reefer-simul-cmap` ConfigMap above.
 
 1. Define a secret for the agent, according to the option you selected:
 
@@ -209,7 +210,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   oc create secret generic agent-secrets \
   --from-literal=KAFKA_USER=${TLS_USER} \
   ```
-  
+
   For anomaly detection you need a user and an api_key, the anonmaly detection URL and the CP4D IAM authorization API to get the token, then do:
 
    ```shell
@@ -219,9 +220,9 @@ To get more detail of this Java Quarkus microprofile application [read this note
   --from-literal=KAFKA_USER=${TLS_USER} \
   --from-literal=CP4D_USER=<cp4d user>   \
   --from-literal=CP4D_APIKEY=<apikey>  \
-  --from-literal=CP4D_AUTH_URL=  \
-  --from-literal=CP4D_USER: <cp4d user> \
-  --from-literal=CP4D_AUTH_URL: <cp4d API to get user token>\
+  --from-literal=CP4D_AUTH_URL=<cp4d url>\
+  --from-literal=CP4D_USER=<cp4d user> \
+  --from-literal=CP4D_AUTH_URL=<cp4d API to get user token>
   ```
 
 1. Deploy the microservice components. You have two choices depending of the fact you have cloned the repository or not.
@@ -238,7 +239,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/deployment.yml
   ```
 
-  *The openshift.yaml is, in fact created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for conveniance and update the docker image to download the one from docker hub.* 
+  _The deployment.yaml is created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for convenience and update the container image to download from Docker Hub._
 
 ## Scenario script
 
@@ -281,8 +282,8 @@ Once the solution is up and running, execute the following steps to present an e
 2. Explore the messages tab and the observed vaccine cold-chain violation alert events.
 
 3. The reefer container information contained in this topic have been identified as having observed temperatures outside the allowable range more than the allowable number of times, as determined to preserve the state of the vaccine doses contained.
-4. Get the service routes with `oc get route reefer-monitoring-agent -o jsonpath="http://{.status.ingress[0].host}"` 
-4. You may go to the service API at the `<URL>/swagger-ui/` and use the interactive query to see the state of the container `C10`: 
+4. Get the service routes with `oc get route reefer-monitoring-agent -o jsonpath="http://{.status.ingress[0].host}"`
+4. You may go to the service API at the `<URL>/swagger-ui/` and use the interactive query to see the state of the container `C10`:
 
  ![3](./images/test-iquery.png)
 
@@ -317,7 +318,7 @@ Once the solution is up and running, execute the following steps to present an e
 
 ### Anomaly detection
 
-If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of time this refrigerator was flagged as adnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail. 
+If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of time this refrigerator was flagged as adnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail.
 
 _note that the process application needs to be updated and the reefer manager service implemented to get the end to end scenario covered_
 
