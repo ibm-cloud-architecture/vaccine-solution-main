@@ -214,10 +214,13 @@ To get more detail of this Java Quarkus microprofile application [read this note
   If not try this deployment config:
 
   ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/openshift.yaml
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/deployment.yaml
   ```
 
-  *The openshift.yaml is, in fact created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for conveniance and update the docker image to download the one from docker hub.* 
+  *The deployment.yaml is, in fact created using the `application.properties` and with the following command: `./mvnw clean package` and placed under `target/kubernetes`. We have copied this generated file for conveniance and update the docker image to download the one from docker hub.* 
+
+This project includes two shell scripts to deploy the simulator and the monitoring agent, so executing the steps describe above.
+
 
 ## Scenario script
 
