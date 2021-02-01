@@ -154,7 +154,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
 1. Copy your TLS-based KafkaUser's credentials to the local namespace with the following `oc` command:
 
   ```shell
-  oc get secret -n ${EVENTSTREAMS_NS} ${TLS_USER} -o json | jq -r '.metadata.name="${TLS_USER}"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
+  oc get secret -n ${EVENTSTREAMS_NS} ${TLS_USER} -o json | jq -r '.metadata.name="tls"' |jq -r '.metadata.namespace="coldchain"' | oc apply -f -
   ```
     - Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents.
     - If you dont remember your tls Kafka User:
