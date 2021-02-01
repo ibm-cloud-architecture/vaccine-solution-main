@@ -26,7 +26,7 @@ To define a new column to be used as label, we use the `Operation` tab to add `C
 ![Define condition](images/a_anomally_def_1.png)
 
 
-We add the new label (Issue =1, NoIssue=0) in the Anomaly Flag column:
+We add the new label (Issue =1, NoIssue=0) in the Issue Flag column:
 
 Which translates to something like:
 "Replaced values for Issue: carbon_dioxide_level where value is greater than or equal to 22 as 1. Replaced all remaining values with 0."
@@ -49,9 +49,9 @@ Then specify a name and server configuration:
 
 ![Auto AI Experiment name](images/autoai-experiment-2.png)
 
-Add a existing data source (the one prepared by the refinery job), and then specify the column to use for prediction (AnomalyFlag column):
+Add a existing data source (the one prepared by the refinery job), and then specify the column to use for prediction (Issue Flag column):
 
-![](images/autoai-class-column.png)
+![](images/a_autoai_start_1.png)
 
 Then execute the prediction experiment.
 
