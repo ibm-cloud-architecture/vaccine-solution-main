@@ -131,6 +131,41 @@ And even test the prediction from the user interface.
 
 A next step is to infuse this model into the scoring application...
 
+
+
+## Configuring Model in OpenScale
+
+This step involves configuring model in UAT for performance validation.
+
+In this step, we shall configure various Monitors for the model, namely Fairness, Drift, Accuracy.
+Also using Watson OpenScale one can explain each prediction by indicating the relative importance of the features in arriving at the prediction.
+
+
+*Note: UAT and Pre-prod can be used interchangeably*.
+
+Go to Instances 
+
+![test](images/a_instances_1.png)
+
+open the openscale dashboard
+
+![test](images/a_instances_openscale_1.png)
+
+Please go to the OpenScale Dashboard, there you would see Add to Dashboard/ Add button that can be used to add a specific deployment for monitoring purpose. This will bring up a popup window showing list of available deployments. This list must show the deployment(s) you have created in previous steps.
+
+Selet the appropriate deployment and press Configure and it will bring you to the next screen that would show you a dialog box to Configure Monitors. Click on the Configure Monitor and that would take you to the screen below.
+
+![test](images/a_model_deployment_1.png)
+
+
+![test](images/a_model_deployment_2.png)
+
+
+Configure the Model info and Evalualtion details. Now it's ready for Model monitoring in UAT and you also can evalutae model performance from Openscale.
+
+
+
+
 ## Notebook
 
 In this section, we are developing a notebook on the telemetries dataset. We have already a project, and defined a data set from [the data collection step](../collect/cp4d-collect-data.md), so we need to add a notebook. For that, in the project view, use `Add to project` ...
