@@ -164,7 +164,41 @@ Selet the appropriate deployment and press Configure and it will bring you to th
 Configure the Model info and Evalualtion details. Now it's ready for Model monitoring in UAT and you also can evaluate model performance from Openscale.
 
 
+## Pre-Prod Model Evaluation & Approval
 
+
+This sub-step involves evaluating the models deployed in pre-prod/UAT environment using Openscale and comparing different models to decide the optimal model to be moved to production in later steps.
+
+Pre-prod Model Evaluation
+
+    After you are done with configuring the model parameters, you have to evaluate the Model (by going through that Actions drop down) by passing the Feedback data.
+
+![test](images/a_model_deployment_3.png)
+
+Click on Evaluate Now, select Import from CSV file and browse for the customer_churn_quality_feedback file on your system. This is made available in the data assets which you can download into your system.
+
+![test](images/a_model_deployment_4.png)
+
+Once you have uploaded the feedback file and clicked on Upload and Evaluate, it may take some time to generate the performance statistics (Fairness/Quality/Drift)
+
+![test](images/a_model_deployment_5.png)
+
+Model Approval
+
+    Once you're satisfied with the deployed model and its performance, approve the model for production (again going through the link in the Actions drop down menu).
+
+![test](images/a_model_deployment_9.png)
+
+
+You may also download the Report PDF showcasing the statistics of the chosen model and its associated summary in concise format in the pdf.
+
+![test](images/a_model_deployment_6.png)
+
+![test](images/a_model_deployment_7.png)
+
+![test](images/a_model_deployment_8.png)
+
+##
 
 ## Notebook
 
