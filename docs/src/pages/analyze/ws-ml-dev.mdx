@@ -171,7 +171,7 @@ This sub-step involves evaluating the models deployed in pre-prod/UAT environmen
 
 Pre-prod Model Evaluation
 
-    After you are done with configuring the model parameters, you have to evaluate the Model (by going through that Actions drop down) by passing the Feedback data.
+After you are done with configuring the model parameters, you have to evaluate the Model (by going through that Actions drop down) by passing the Feedback data.
 
 ![test](images/a_model_deployment_3.png)
 
@@ -185,7 +185,7 @@ Once you have uploaded the feedback file and clicked on Upload and Evaluate, it 
 
 Model Approval
 
-    Once you're satisfied with the deployed model and its performance, approve the model for production (again going through the link in the Actions drop down menu).
+Once you're satisfied with the deployed model and its performance, approve the model for production (again going through the link in the Actions drop down menu).
 
 ![test](images/a_model_deployment_9.png)
 
@@ -198,7 +198,78 @@ You may also download the Report PDF showcasing the statistics of the chosen mod
 
 ![test](images/a_model_deployment_8.png)
 
-##
+## Model Deployment and Configuration for Monitoring in Production Environment
+
+Once a model is validated in UAT, deploy the model in a production environment by following the steps below.
+
+This step involves exporting the desired model which was deployed in UAT environment and was later approved to move from from UAT environment to production. 
+
+
+Export UAT Deployment space
+
+  Select Vaidation Model Validation Space in Deployments (Menu->Deployments-> Spaces).
+
+  Create an export by clicking Export Space icon shown in the image below.
+
+
+![test](images/a_model_deployment_10.png)
+
+
+Click on New Export File. Select the Models/asset you intend to Export. Give an appropriate file name and click on Create.
+
+Once the export file has been created, download the zip file on your system. 
+
+
+
+Create Production Deployment Space
+
+Create a prod deployment space by importing the file you saved in the previous step.
+
+Go to Deployments on left pane in Cloud Pak (shown previously). Click on New deployment space and select Create a space from a file.
+
+Now upload the file into this deployment space and click on Create with an appropriate name for the deployment space.
+
+After that is done, you can go to the newly created deployment space and see the models you created in previous step and was moved to production after inspection. 
+
+![test](images/a_model_deployment_11.png)
+
+Now add admin as a collaborator using the access control tab. This is required for OpenScale model monitoring.
+
+
+
+Prod Model Deployment
+
+The Model will appear in the Assets tab (that you had approved last time in UAT Deployment Space). Deploy the Model (select online deployment type) and give the deployment a unique name appending to Prod_Deployment.
+
+The Deployed model will appear in the Deployments tab under the same deployment Space. 
+
+
+Configuring Prod Model in OpenScale
+
+
+Go to OpenScale and add a Machine learning provider
+
+   Select Watson Machine Learning (V2) as the Service provider type
+   Select the production space you just created in the dropdown of Select space
+
+   Select Environment type as Production.
+
+Add Model for Monitoring
+
+   Now go back to the OpenScale dashboard. Click on Add to Dashboard or Add. It will show a list of deployments in a popup window.
+   Select your prod deployment and press Configure.
+   Click on Configure and Press Configure monitors in the next dialog box.
+   Click on Import settings
+   
+   
+
+  Please wait for sometime. It imports the settings of the model you had configured for UAT/ pro-prod environment.
+
+  When the import is done, all the parameters (Fairness/Quality/Model parameters etc.) and configuration/settings would automatically be imported.
+
+
+
+
 
 ## Notebook
 
