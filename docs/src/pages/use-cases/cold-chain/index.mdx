@@ -208,6 +208,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   --from-literal=KAFKA_BOOTSTRAP_SERVERS=${CLUSTER_NAME}-kafka-bootstrap.${EVENTSTREAMS_NS}.svc:9093 \
   --from-literal=QUARKUS_KAFKA_STREAMS_APPLICATION_ID=cold-chain-agent-${YOUR_SUFFIX} \
   --from-literal=KAFKA_SECURITY_PROTOCOL=SSL \
+  --from-literal=TEMPERATURE_THRESHOLD=-50.0 \
   --from-literal=PREDICTION_ENABLED=<ARE_PREDICTIONS_ENABLED>
   ```
 
@@ -306,62 +307,61 @@ Once the solution is up and running, execute the following steps to present an e
 
 ### Analyze generated cold-chain violations
 
-1. Click **Topics** from the left navigation menu and select the topic that matches the `reefer-topic` value.
+1. Obtain your IBM Event Streams Console UI's url via the following `oc` command:
 
-2. Explore the messages tab and the observed vaccine cold-chain violation alert events.
+  ```shell
+  oc get route -n ${EVENTSTREAMS_NS} ${CLUSTER_NAME}-ibm-es-ui -o jsonpath="https://{.status.ingress[0].host}"
+  ```
 
-3. The reefer container information contained in this topic have been identified as having observed temperatures outside the allowable range more than the allowable number of times, as determined to preserve the state of the vaccine doses contained.
-4. Get the service routes with `oc get route reefer-monitoring-agent -o jsonpath="http://{.status.ingress[0].host}"`
-4. You may go to the service API at the `<URL>/swagger-ui/` and use the interactive query to see the state of the container `C01`:
+1. Open your IBM Event Streams Console UI by pointing your browser to the above url.
 
- ![3](./images/test-iquery.png)
+1. Click on **Topics** from the left navigation menu and select your `YOUR_REEFER_TOPIC` you created in the [pre-requisites](#pre-requisites) section from the topic list.
 
- The response may look like:
+1. Explore the messages tab and the observed vaccine cold-chain violation alert events.
 
- ```
- {
-  "alreadyReportedColdChainViolation": false,
-  "maxRecordToKeep": 25,
-  "maxTemperature": -9,
-  "maxTemperatureRegistered": -20,
-  "maxViolationAllowed": 10,
-  "reeferID": "C10",
-  "temperatureList": [
-    -49.92182102,
-    -49.22471643,
-    -50.9776016,
-    -31.07841667,
-    -28.75859987,
-    -32.18018047,
-    -31.04312727,
-    -28.70898255,
-    -32.03926825,
-    -31.86666432,
-    -30.40963273,
-    -49.07404188
-  ],
-  "tooManyViolations": false,
-  "violatedTemperatureCount": 0
-}
- ```
+  ![messages2](./images/messages2.png)
+
+1. The reefer container information contained in this topic have been identified as having observed temperatures outside the allowable range more than the allowable number of times, as determined to preserve the state of the vaccine doses contained.
+
+1. Get the route to the Vaccine Monitoring Agent microservice with the following `oc` command:
+
+  ```shell
+  oc get route reefer-monitoring-agent -o jsonpath="http://{.status.ingress[0].host}"
+  ```
+
+1. Point your browser to the `/swagger-ui` Swagger API endpoint that the Vaccine Monitoring Agent microservice exposes by using the above url. That is, point your browser to `<URL>/swagger-ui/`
+
+  ![messages3](./images/messages3.png)
+
+1. Click on the first API endpoint definition the Swagger UI lists (`/reefer-tracker/data/{reeferID}`) that would allow us to query the Vaccine Monitoring Agent microservice to retrieve the monitoring data for a specific reefer container ID.
+
+1. Once this API endpoint definition gets expanded, click on the **Try it our** button on the top right corner. That will make the `reeferID` text input box active. Insert the reefer ID you used in the previous [Generate vaccine container telemetry events](#generate-vaccine-container-telemetry-events) section to simulate telemetries for and click on **Execute**. You should see the monitoring data for that reefer container similar to the following picture:
+
+  ![messages4](./images/messages4.png)
+
+  where you will see in the reponse body a json object representing the monitoring data for the reefer container you requested it for. You will be able to see if there has been any cold chain temperature violations, how many, the last temperatures, etc...
 
 ### Anomaly detection
 
-If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of time this refrigerator was flagged as adnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail.
+If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of times this refrigerator was flagged as abnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail.
 
 _note that the process application needs to be updated and the reefer manager service implemented to get the end to end scenario covered_
 
-
 ### Clearing the project
 
-To delete the different resources do the following:
+To delete the different resources we have created on your OpenShift cluster throughout this tutorial do the following:
 
 ```shell
-oc delete cm agent-cm
-oc delete cm reefer-simul-cm
-oc delete secret agent-secrets
-oc delete secret reefer-simul-secret
-oc delete deployment vaccine-reefer-simulator
-oc delete deploymentconfig reefer-monitoring-agent
-oc delete project coldchain
+oc delete -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/deployment.yml
+oc delete -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/app-deployment.yaml
+oc delete project ${PROJECT_NAME}
 ```
+
+Finally, delete all the topics created in your IBM Event Streams instance. These are your `YOUR_TELEMETRY_TOPIC` and `YOUR_REEFER_TOPIC` you created in the [pre-requisites](#pre-requisites) section. The other two are internal topics created as a result of the Kafka Streams stateful operations being done in the Vaccine Monitoring Agent microservice code (see [here](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent/blob/master/src/main/java/ibm/gse/eda/vaccine/coldchainagent/domain/TelemetryAssessor.java#L86-L133) for more detail on those). These two internal topics should have the following names:
+
+```shell
+cold-chain-agent-<YOUR_SUFFIX>-reeferAggregateTable-changelog
+cold-chain-agent-<YOUR_SUFFIX>-reeferAggregateTable-repartition
+```
+
+To delete these topics, you simply need to go to your IBM Event Streams instance UI dashboard, click on topics on the left hand side navigation menu, click on the three-dots options button that appears on the right hand side of each of the topics in the topics list and select delete. 
