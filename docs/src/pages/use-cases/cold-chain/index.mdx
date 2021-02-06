@@ -28,9 +28,9 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 ### Pre-requisites
 
-**IMPORTANT:** if you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
+**IMPORTANT:** If you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
 
-1. Create the following artifacts in the `eventstreams` namespace on your OpenShift cluster (_note: if you happened to have an existing IBM Event Streams instance on a different namespace already, you don't need to create an new one but make sure you use the appropriate namespace name throughout the rest of the tutorial_). We will refer to this namespace as `YOUR_EVENT_STREAMS_NAMESPACE` throughout this tutorial:
+1. Create the following artifacts in the `eventstreams` namespace on your OpenShift cluster (_NOTE: If you happened to have an existing IBM Event Streams instance on a different namespace already, you don't need to create an new one but make sure you use the appropriate namespace name throughout the rest of the tutorial_). We will refer to this namespace as `YOUR_EVENT_STREAMS_NAMESPACE` throughout this tutorial:
 
    1. Create an EventStreams instance _(via the [Event Streams Custom Resource](https://ibm.github.io/event-streams/installing/installing/#install-an-event-streams-instance))_.
    1. Create a [Kafka User with SCRAM-based credentials](https://ibm.github.io/event-streams/security/managing-access/#managing-access-to-kafka-resources), as required by the [Vaccine Reefer Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator#application-deployment).
@@ -40,8 +40,8 @@ The solution for this use case includes streaming telemetry events, a stateful m
 1. Create a new project that will be used for the deployment of all other components. This will be refered as `YOUR_PROJECT_NAME` throughout the rest of this tutorial. For the instructions on this tutorial, We will assume the name for the project is `coldchain`.
 1. [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
 1. [jq](https://stedolan.github.io/jq/) on your local environment.
-1. Get a cloud pak for data deployed on OpenShift Cluster
-1. Use a Terminal and the oc cli. If you want to access the code source you can clone the two main repositories of this solution:
+1. IBM Cloud Pak for Data, deployed on OpenShift Cluster
+1. Use a Terminal and the `oc` cli. If you want to access the code source you can clone the two main repositories of this solution:
 
   ```shell
   git clone https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator
@@ -69,12 +69,12 @@ To get more detail of this Python Flask application [read this note](/solution/r
   export CLUSTER_NAME=<YOUR_CLUSTER_NAME>
   export EVENTSTREAMS_NS=<YOUR_EVENT_STREAMS_NAMESPACE>
   ```
-   
-  where 
-  
+
+  where
+
    - `<YOUR_EVENT_STREAMS_NAMESPACE>` is the name where you installed your IBM Event Streams instance in the [pre-requisites](#pre-requisites) section above.
-   - `<YOUR_CLUSTER_NAME>` is the name of your IBM Event Streams cluster which can be found with the following `oc` command:   
-   
+   - `<YOUR_CLUSTER_NAME>` is the name of your IBM Event Streams cluster which can be found with the following `oc` command:
+
    ```shell
    $ oc get eventstreams -n ${EVENTSTREAMS_NS}
    NAME           STATUS
@@ -89,7 +89,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
   --from-literal=KAFKA_MAIN_TOPIC=<YOUR_TELEMETRY_TOPIC> \
   --from-literal=KAFKA_BROKERS=<YOUR_KAFKA_BOOTSTRAP_EXTERNAL_ADDRESS>
   ```
-  
+
   where
 
    - `<YOUR_TELEMETRY_TOPIC>` is the name of the topic that will get the container telemetries events you created in the [pre-requisites](#pre-requisites) section.
@@ -105,7 +105,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
   --from-literal=KAFKA_USER=<YOUR_SCRAM_KAFKA_USER_USERNAME> \
   --from-literal=KAFKA_PASSWORD=<YOUR_SCRAM_KAFKA_USER_PASSWORD>
   ```
-  
+
   where
 
    - `<YOUR_SCRAM_KAFKA_USER_USERNAME>` is the name you gave in the [pre-requisites](#pre-requisites) section when you generated the SCRAM credentials. The generation of the SCRAM credential created a KafkaUser object behind the scenes with the name you specified. If you don't remember that name or you want to verify it, you can use the following `oc` command:
@@ -124,7 +124,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
   ```shell
   oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | jq --arg project_name "${PROJECT_NAME}" -r '.metadata.namespace=$project_name' | oc apply -f -
   ```
-  _\*Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents. That is, we are providing the server-side TLS certificate in the secret the Vaccine Reefer Simulator and the Vaccine Monitoring Agent microservices are expecting to find it._
+  _\*NOTE: We are copying and renaming the certificate in a single command to minimize the need for editing deployment documents. That is, we are providing the server-side TLS certificate in the secret the Vaccine Reefer Simulator and the Vaccine Monitoring Agent microservices are expecting to find it._
 
 1. Deploy Vaccine Reefer Simulator microservice components (application plus a service and a route to make it accessible) via the following `oc apply` command:
 
@@ -152,7 +152,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
 
    ![2](./images/simul-app-ocp.png)
 
-  \*_Note: if you want to build, clone [the repository](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator) and follows the readme._
+  \*_NOTE: If you want to build from scratch, clone [the repository](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator) and follow the README._
 
 1. Get the route to access the Vaccine Reefer Simulator application with the `oc get routes` command.
 
@@ -183,7 +183,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
     NAME                  CLUSTER         AUTHENTICATION   AUTHORIZATION
     vaccine-tls           development     tls              simple
     ```
-    _\*Note that we are copying and renaming the credentials in a single command to minimize the need for editing deployment documents._
+    _\*NOTE: We are copying and renaming the credentials in a single command to minimize the need for editing deployment documents._
    - `<UNIQUE_IDENTIFIER>` is a unique identifier of your choice to be used as the suffix for any resource created in OpenShift and IBM Event Streams so that it does not collide with anyone else also completing this tutorial.
 
 1. If not done so already in the previous section where we deployed the Vaccine Reefer Simulator microservice, copy the server-side public certificate of the Event Streams instance to your local project:
@@ -191,7 +191,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
   ```shell
   oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | jq --arg project_name "${PROJECT_NAME}" -r '.metadata.namespace=$project_name' | oc apply -f -
   ```
-  _\*Note that we are copying and renaming the certificate in a single command to minimize the need for editing deployment documents. That is, we are providing the server-side TLS certificate in the secret the Vaccine Reefer Simulator and the Vaccine Monitoring Agent microservices are expecting to find it._
+  _\*NOTE: We are copying and renaming the certificate in a single command to minimize the need for editing deployment documents. That is, we are providing the server-side TLS certificate in the secret the Vaccine Reefer Simulator and the Vaccine Monitoring Agent microservices are expecting to find it._
 
 1. Copy your TLS-based KafkaUser's credentials you created in the [pre-requisites](#pre-requisites) section to the local namespace with the following `oc` command:
 
@@ -241,8 +241,8 @@ To get more detail of this Java Quarkus microprofile application [read this note
    - `<YOUR_CP4D_USER>` is your Cloud Pak for Data username.
    - `<YOUR_CP4D_APIKEY>` is your Cloud Pak for Data API key.
    - `<YOUR_CP4D_AUTH_URL>` is your Cloud Pak for Data IAM authentication and authorization API url.
-  
-  \***Note:** If you have not completed the [Developing the Anomaly Detection Model with Watson Studio](/analyze/ws-ml-dev/) section and as a result you don't have an anomaly detection model deployed to connect to, simply **use random string values** for the variables above.
+
+  \***NOTE:** If you have not completed the [Developing the Anomaly Detection Model with Watson Studio](/analyze/ws-ml-dev/) section and as a result you don't have an anomaly detection model deployed to connect to, simply **use random string values** for the variables above.
 
 1. Deploy Vaccine Monitoring Agent microservice by executing the following `oc` command:
 
@@ -335,7 +335,7 @@ Once the solution is up and running, execute the following steps to present an e
 
 1. Click on the first API endpoint definition the Swagger UI lists (`/reefer-tracker/data/{reeferID}`) that would allow us to query the Vaccine Monitoring Agent microservice to retrieve the monitoring data for a specific reefer container ID.
 
-1. Once this API endpoint definition gets expanded, click on the **Try it our** button on the top right corner. That will make the `reeferID` text input box active. Insert the reefer ID you used in the previous [Generate vaccine container telemetry events](#generate-vaccine-container-telemetry-events) section to simulate telemetries for and click on **Execute**. You should see the monitoring data for that reefer container similar to the following picture:
+1. Once this API endpoint definition gets expanded, click on the **Try it out** button on the top right corner. That will make the `reeferID` text input box active. Insert the reefer ID you used in the previous [Generate vaccine container telemetry events](#generate-vaccine-container-telemetry-events) section to simulate telemetries for and click on **Execute**. You should see the monitoring data for that reefer container similar to the following picture:
 
   ![messages4](./images/messages4.png)
 
@@ -345,7 +345,7 @@ Once the solution is up and running, execute the following steps to present an e
 
 If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of times this refrigerator was flagged as abnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail.
 
-_note that the process application needs to be updated and the reefer manager service implemented to get the end to end scenario covered_
+_NOTE: The process application needs to be updated and the reefer manager service implemented to get the end-to-end scenario covered_
 
 ### Clearing the project
 
@@ -364,4 +364,4 @@ cold-chain-agent-<YOUR_SUFFIX>-reeferAggregateTable-changelog
 cold-chain-agent-<YOUR_SUFFIX>-reeferAggregateTable-repartition
 ```
 
-To delete these topics, you simply need to go to your IBM Event Streams instance UI dashboard, click on topics on the left hand side navigation menu, click on the three-dots options button that appears on the right hand side of each of the topics in the topics list and select delete. 
+To delete these topics, you simply need to go to your IBM Event Streams instance UI dashboard, click on topics on the left hand side navigation menu, click on the three-dots options button that appears on the right hand side of each of the topics in the topics list and select delete.
