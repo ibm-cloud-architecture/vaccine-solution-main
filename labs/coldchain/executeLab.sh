@@ -4,7 +4,7 @@ export PROJECT_NAME=coldchain
 export CLUSTER_NAME=eda-dev
 export ESNS=eventstreams
 export SCRAM_USER=app-scram
-
+export TELEMETRY_TOPIC=coldchain-telemetry
 
 oc project $PROJECT_NAME 
 echo "------------------ Deploy reefer simulator -------------------"
@@ -15,7 +15,7 @@ oc get secret ${SCRAM_USER} -n ${ESNS} -o json | jq -r '.metadata.namespace="'${
 
 oc create configmap reefer-simul-cm \
   --from-literal=KAFKA_CERT=/app/certs/ca.crt \
-  --from-literal=KAFKA_MAIN_TOPIC=coldchain-telemetry --from-literal=KAFKA_BROKERS=${KAFKA_BROKERS}
+  --from-literal=KAFKA_MAIN_TOPIC=${TELEMETRY_TOPIC} --from-literal=KAFKA_BROKERS=${KAFKA_BROKERS}
 
 oc create secret generic reefer-simul-secret \
   --from-literal=KAFKA_USER=${SCRAM_USER} \

@@ -3,7 +3,6 @@ title: Vaccine Order Management
 description: This microservice manage order for vaccine
 ---
 
-
 This microservice manages vaccine orders for a world wide demand and distribution. This is an example of using [Quarkus](https://quarkus.io), microprofile [Reactive Messaging](https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/2/concepts.html), [Debezium outbox quarkus extension](https://debezium.io/documentation/reference/integrations/outbox.html) with Debezium [change data capture  for Postgresl](https://debezium.io/documentation/reference/connectors/postgresql.html) to Kafka. The database is Postgresql, the service uses Hibernate ORM with Panache. 
 
 The DevOps is supported by Git Action and then gitops repository.
@@ -11,7 +10,6 @@ The DevOps is supported by Git Action and then gitops repository.
 
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
-  <AnchorLink>Build and deploy to OpenShift</AnchorLink>
   <AnchorLink>Demonstration script</AnchorLink>
 </AnchorLinks>
 
@@ -44,8 +42,8 @@ Another view could be a pods view of the solution to deploy. The Debezium change
 **Github repository:** [Vaccine-order-mgr-pg](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg)
 
 
-**Kafka topics produced to:** vaccine.public.vaccineorderentity
-**Kafka topics consumed from :** vaccine-shipment-plans
+**Kafka topics produced to:** vaccine.public.orderevents
+**Kafka topics consumed from :** vaccine.shipment.plans
 
 **Events produced:**
 
@@ -55,101 +53,7 @@ We will simplify the process and aggregate in the following event types:
 * orderUpdated
 
 
-## Build and deploy to OpenShift
-
-This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
-
-To build and run locally see the [repository main readme](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg) as we have different docker-compose files to run in demonstration mode or in development mode.
-
-In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access Postgres and Kafka. We are using Event Streams deployed in Cloud Pak for Integration, but it could work the same with Strimzi. 
-
-As an example we created the OpenShift project called "vaccine" with a command: `oc new-project vaccine`.
-
-### Pre requisites
-
-* Clone the source git repository: `git clone https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg`
-* Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
-
-  ```shell
-  # Define environement variables
-  SERVICE_ACCOUNT_NAME=postgres-sa
-  DEPLOYMENT_NAME=postgres
-  SERVICE_NAME=postgres
-  DOCKER_IMAGE=docker.io/postgres:11.6-alpine
-  POSTGRES_PASSWORD=adifficultpasswordtoguess
-
-  oc create serviceaccount ${SERVICE_ACCOUNT_NAME}
-  oc adm policy add-scc-to-user anyuid -n ${PROJECT_NAME} -z ${SERVICE_ACCOUNT_NAME}
-  oc create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_IMAGE}
-  oc set serviceaccount deployment/${DEPLOYMENT_NAME} ${SERVICE_ACCOUNT_NAME}
-  oc patch deployment ${DEPLOYMENT_NAME} --type="json" -p='[{"op":"add", "path":"/spec/template/spec/containers/0/args", "value":[]},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"-c"},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"wal_level=logical"} ]'
-  oc set env deployment ${DEPLOYMENT_NAME} POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  oc expose deployment ${DEPLOYMENT_NAME} --port 5432 --name ${SERVICE_NAME}
-  ```
-
-* Get an instance of Kafka deployed on OpenShift like [IBM Event Streams](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#install-event-streams-using-operators)...). 
-
-
-### Define Kafka user and postgres user secrets
-
-* Get Kafka user to access Event Streams bootstrap in external route.
-
- ```shell
- oc get kafkausers -n eventstreams 
- # NAME                                CLUSTER   AUTHENTICATION   AUTHORIZATION
- # app-scram                           eda-dev   scram-sha-512    simple
- # app-tls                             eda-dev   tls              simple
- ```
-* Get password with: ``
-* Define a secret manifest with a command like below, or by updating the  [src/main/kubernetes/secrets.yaml](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/kubernetes/secrets.yaml) secret file.
-
- ```shell
- oc apply -f - <<EOF
- apiVersion: v1
- kind: Secret
- metadata:
-   name: vaccine-order-secrets
- data:
-    KAFKA_USER: <username-base64-encoded>
-    KAFKA_PASSWORD: <pwd-base64-encoded>
-    QUARKUS_DATASOURCE_PASSWORD: <postgres-user-pwd-base64-encoded>
-    QUARKUS_DATASOURCE_USERNAME: <postgres-user-base64-encoded>
- EOF
- ```
-
-The strings in the secret are base64 encoded, so use something like: `echo "app-scram" | base64 `. The password is already encrypted in a secret within the `eventstreams` project, so use `oc get secret app-scram -n eventstreams -o jsonpath='{.data.password}'` command.
-
-
-### Get Event Streams certificates
-
-For Event Streams get URL of the bootstrap server and the service credentials (TLS certificates) following [those instructions.](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#getting-tls-authentication-from-event-streams-on-openshift)
-
-If not done before, copy the cluster certificate via the secret to your project (`vaccine`):
-
-  ```shell
-  oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
-  ```
-
-### Define environment variables via ConfigMap
-
-Modify the config map from [src/main/kubernetes/configmap.yaml](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/kubernetes/configmap.yaml) with the URL of your Kafka bootstrap server.
-
-  ```yaml
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: vaccine-order-ms-cm
-  data:
-    KAFKA_BOOTSTRAP_SERVERS: "light-es-kafka-bootstrap.eventstreams.svc:9092"
-    KAFKA_SSL_PROTOCOL: "TLSv1.2"
-    KAFKA_SSL_TRUSTSTORE_LOCATION: "/deployments/certs/server/ca.p12"
-    KAFKA_SSL_TRUSTSTORE_TYPE: "PKCS12"
-    SHIPMENT_PLAN_TOPIC: "vaccine_shipment_plans"
-    KAFKA_SASL_MECHANISM: SCRAM-SHA-512
-    KAFKA_SECURITY_PROTOCOL: SASL_SSL
-  ```
-
-Those environment variables are used by the application, and configured via the [src/main/resources/application.properties](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/resources/application.properties). Below is the declaration that defines environment variables from the previously created secrets and configmap.
+The following environment variables are used by the application, and configured via the [src/main/resources/application.properties](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/master/src/main/resources/application.properties).
 
   ```properties
   quarkus.openshift.env.configmaps=vaccine-order-ms-cm
@@ -160,11 +64,28 @@ Those environment variables are used by the application, and configured via the 
   quarkus.openshift.secret-volumes.es-cert.secret-name=eda-gse-cluster-ca-cert
   ```
 
-* Then proceed with the following command to define the config map into OpenShift:
+## Build and deploy to OpenShift
 
- ```shell
- oc apply -f src/main/kubernetes/configmap.yaml
- ```
+This microservice is built using maven and Quarkus extensions. We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
+
+To build and run locally see the [repository main readme](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg) as we have different docker-compose files to run in demonstration mode or in development mode.
+
+To build and deploy to OpenShift, you can follow the step by step instructions in [this scenario](/use-cases/order/).
+
+As an alternate you can use the different scripts from the `vaccine-order-mgr-pg` project:
+
+* Clone the source git repository: `git clone https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg`
+* Set some environment variables in `./src/main/scripts/setenv.sh` script.
+* Deploy postgresql
+
+  ```shell
+  cd ./src/main/scripts/
+  deployPostgresql.sh
+  ```
+
+In this section we address how to use OpenShift Source to Image to build and deploy the application to OpenShift. The application is using environment variables to access to user, password, URLs to access Postgres and Kafka. We are using Event Streams deployed in Cloud Pak for Integration, but it could work the same with Strimzi. 
+
+As an example we created the OpenShift project called "vaccine" with a command: `oc new-project vaccine`.
 
 ### Deploy the application
 
