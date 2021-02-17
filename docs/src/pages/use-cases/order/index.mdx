@@ -152,19 +152,25 @@ oc apply -f  https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-or
 
 ### Deploy Debezium CDC connector
 
-The Event Streams product documentation goes over the tasks to be done, but to summarize them, here are the actions done to deploy the postgres debezium connector:
+The [Event Streams product documentation](https://ibm.github.io/event-streams/connecting/setting-up-connectors/) goes over the tasks to be done to config Kafka Connect cluster, but we can summarize them for our use case as:
 
-* Start a Kafka connector cluster: We use the custom resource called `KafkaConnectS2I`, which one instance represents a Kafka connect cluster. Each connector is represented by another custom resource called KafkaConnector. Kafka connect needs a user access to the Brokers. We can use the TLS user as previously done. 
+* Start a Kafka connector cluster: We use the custom resource definition called `KafkaConnectS2I`, which one instance represents a Kafka connect cluster. Each connector is represented by another custom resource called `KafkaConnector`. Kafka connect needs a user access to the Brokers. We can use the TLS user as previously done (See also [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/connect-cos/#set-up-the-kafka-connect-cluster) for the same type of setting). 
   * Event Streams UI has a Toolbox menu with the `Set up a Kafka Connect environment` where we can download the `KafkaConnectS2I` configuration. The matching configuration is [in this file](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/main/environment/cdc/kafka-connect-s2i.yaml) and uses predefined TLS user and cluster certificate. The cluster name is `connect-cluster`.
-  * Modify the bootstrap server and the TLS user to be used. Ensure the user can access any topics.
-  * Deploy the cluster with: `oc apply -f kafka-connect-s2i.yaml -n eventstreams`
+  * Update the following values in this file: `bootstrapServers` and `secretName: tls`  to `secretName: <yourTLSuser>` and the Server ca certificate secretName like `kafka-cluster-ca-cert`.
+   ```yaml
+   tls:
+    trustedCertificates:
+      - certificate: ca.crt
+        secretName: kafka-cluster-ca-cert
+   ```
+  * Deploy the cluster with: `oc apply -f kafka-connect-s2i.yaml -n ${EVENTSTREAMS_NS}`
   * Validate it via: 
 
    ```shell
-   oc get kafkaconnects2i -n eventstreams
-   oc describe kafkaconnects2i connect-cluster -n eventstreams
+   oc get kafkaconnects2i -n ${EVENTSTREAMS_NS}
+   oc describe kafkaconnects2i connect-cluster -n ${EVENTSTREAMS_NS}
    ```
-* Download the postgres plugin archive from [debezium maven repository](https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/1.4.0.Final/debezium-connector-postgres-1.4.0.Final-plugin.tar.gz) and then add the jar files to the `my-plugins\debezium-connector` folder. We need a subfolder as this connector includes multiple jars. 
+* Download the postgres plugin archive from [debezium maven repository](https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/1.4.0.Final/debezium-connector-postgres-1.4.0.Final-plugin.tar.gz) and then add the jar files to the `my-plugins\debezium-connector` folder. We need a subfolder as this connector includes multiple jars. This step was already done and the debezium connector jars are in the [environment/cdc/my-plugins/debezium-connector)](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/tree/main/environment/cdc/my-plugins/debezium-connector)
 
   ```
   ├── my-plugins
@@ -189,15 +195,33 @@ The Event Streams product documentation goes over the tasks to be done, but to s
 * Deploy the connector configuration:
 
   ```shell
-  oc start-build connect-cluster-connect --from-dir ./my-plugins/
-  oc get builds
-  # NAME                        TYPE     FROM             STATUS    STARTED          DURATION
-  # connect-cluster-connect-3   Source   Binary@f639186   Running   19 seconds ago   
-  # once build is completed... wait to get the 3 kafka connect workers ready
-  oc get pods -w
+  # pwd = .../environment/cdc/
+  oc start-build connect-cluster-connect --from-dir ./my-plugins/ --follow -n ${EVENTSTREAMS_NS}
+  #...
+  # Storing signatures
+  # Successfully pushed image-registry.openshift-image-registry.svc:5000/eventstreams/connect-cluster-connect@sha256:9315b6a6c8f904d0fb5a57f67ba4c9067c6c8264814f283151b20b9d6f147092
+  # Push successful
   ```
-* Start the connector: `oc apply -f pg-connector.yaml`
-* Verify it is running: `oc describe kafkaconnector pg-connector` 
+* Modify the `pg-connector.yaml` from the `environment/cdc` folder to configure the Postgres datasource credentials:
+  ```yaml
+  config: 
+    database.dbname: postgres
+    database.hostname: postgres.vaccineorder.svc
+    database.password: pgpwd
+    database.port: 5432
+    database.server.name: vaccine
+    database.user: postgres
+    table.whitelist: public.orderevents
+    plugin.name: pgoutput
+  ```
+* Then start the connector: `oc apply -f pg-connector.yaml -n ${EVENTSTREAMS_NS}`
+* Verify it is running: `oc describe kafkaconnector pg-connector -n ${EVENTSTREAMS_NS}`, you should see one task running. 
+* Looking at the pod trace for the connector you should see a successful connection, something like:
+
+```
+Successfully tested connection for jdbc:postgresql://postgres.vaccineorder.svc:5432/postgres with user 'postgres' 
+```
+* A new topic may have been created with the name of the table replicated: `vaccine.public.orderevents` with new messages mapping the rows in the table.
 
 ### Deploy the Optimization Service
 
@@ -205,14 +229,80 @@ The Event Streams product documentation goes over the tasks to be done, but to s
 
 Once the solution is up and running in your target deployment environment (local or OpenShift) execute the following steps to present an end to end demonstration.
 
-
 ### Validate existing vaccine lot shipment plan
+
+TBD 
 
 ### Create an order from the user interface of the Order Service. 
 
+Connect to the order microservice URL, for example it could look like http://vaccineorderms-vaccine.clusternametochangewithyours.containers.appdomain.cloud. You should reach the home page. Then select Orders tab. 
+
+If there is no order created click on `NEW ORDER` button 
+
+ ![](./images/order-ui.png)
+
+and fill the following data:
+
+ ```yaml
+ organization: Japan Government
+ delivery location: Tokyo
+ delivery date: 2021-01-24
+ quantity: 150
+ priority: 2
+ vaccine type: covid-19
+ ```
+
+
+* Verify the data in postgresql: 
+
+Once submitted the data are saved into the postgres DB, with the outbox pattern having created new records in the corresponding Event tables. 
+This can be done using different tools, like `psql` directly in the pod, or `pgadmin4`.
+
+ ```shell
+ oc get pods | grep postgres
+ oc rsh <postgres pod id>
+ # in the shell session within the pod do:
+ psql -U postgres
+ # in the psql shell, list the table
+ \d 
+ # Look at the content of the main table:
+ select * from public.vaccineorderentity;
+ # You should get one new record matching your data
+ # Verify outbox pattern works:
+ select * from public.orderevents;
+
+ id    |   aggregatetype    | aggregateid | type         | timestamp |payload 
+ c80.. | VaccineOrderEntity | 1           | OrderCreated | 2021-01-24 03:44:08.131634 | {"orderID":1,"deliveryLocation":"Tokyo","quantity":150,"priority":2,"deliveryDate":"2021-01-24","askingOrganization":"Japan Government","vaccineType":"COVID-19","status":"OPEN","creationDate":"24-Jan-2021 03:44:08"} | 
+ ```
+
+The outbox table of the order events has metadata attributes and then a payload matches the saved record in the orign table.
+
+### Verify the message in the Kafka topic: `vaccine.public.orderevents`
+
+ ![](./images/outbox-topic.png)
+
+  ```json
+  {"before":null,"after":
+  {"id":"c8050bb4-05d8-4270-833c-083995f27848",
+   "aggregatetype":"VaccineOrderEntity",
+   "aggregateid":"1",
+   "type":"OrderCreated",
+   "timestamp":1611459848131634,
+   "payload":"{\"orderID\":1,\"deliveryLocation\":\"Paris\",\"quantity\":150,\"priority\":2,\"deliveryDate\":\"2021-01-24\",\"askingOrganization\":\"French Government\",\"vaccineType\":\"COVID-19\",\"status\":\"OPEN\",\"creationDate\":\"24-Jan-2021 03:44:08\"}",
+  "tracingspancontext":"#Sun Jan 24 03:44:08 GMT 2021\n"},
+  "source":{"version":"1.4.0.Final",
+  "connector":"postgresql","name":"vaccine",
+  "ts_ms":1611712125168,"snapshot":"last",
+  "db":"postgres","schema":"public","table":"orderevents",
+  "txId":1371,"lsn":41341808,"xmin":null},"op":"r","ts_ms":1611712125173,"transaction":null}
+  ```
+
+### REST APIs
+
+The REST end points this service expose are in the OpenApi doc below, but not all operations are fully implemented yet.
+
+ ![4](./images/openapi.png)
+
+
 ### See how the shipment plan is modified
-
-### Validate the blockchain records
-
-### Present the events created
 
