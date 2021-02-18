@@ -8,11 +8,6 @@ This microservice manages vaccine orders for a world wide demand and distributio
 The DevOps is supported by Git Action and then gitops repository.
 
 
-<AnchorLinks>
-  <AnchorLink>Overview</AnchorLink>
-  <AnchorLink>Demonstration script</AnchorLink>
-</AnchorLinks>
-
 ## Overview
 
 This project implements a very simple event driven microservice to support the Create, Read, Update, of vaccine orders. This implementation highlights the following capabilities and patterns:
@@ -33,7 +28,19 @@ The following diagram presents the simple context view of the service deployed o
  ![Deployment view](./images/vaccine-order-1.png)
 
 
-The component writes to the database all the orders received, but also produces records to Kafka via the Outbox pattern and change data capture.
+The component writes to the database all the orders received, but also produces records to Kafka via the Outbox pattern and Debezium change data capture.
+
+The Quarkus Debezium outbox pattern is described in [this note](https://debezium.io/documentation/reference/integrations/outbox.html). The configuration used is in the `application.properties`:
+
+```
+quarkus.debezium-outbox.id.name=aggregateid
+quarkus.debezium-outbox.id.column-definition="DECIMAL NOT NULL"
+quarkus.index-dependency.outbox.group-id=io.debezium
+quarkus.debezium-outbox.aggregate-id.name=aggregateid
+quarkus.debezium-outbox.aggregate-id.column-definition="DECIMAL NOT NULL"
+quarkus.index-dependency.outbox.artifact-id=debezium-quarkus-outbox
+quarkus.debezium-outbox.table-name=orderevents
+```
 
 Another view could be a pods view of the solution to deploy. The Debezium change data capture is a Kafka connector.
 
@@ -89,9 +96,12 @@ As an example we created the OpenShift project called "vaccine" with a command: 
 
 ### Deploy the application
 
+See readme file in project repository and the [order optimization use case description](/use-cases/order/)
+
 The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift:
 
  ```shell
+ source .env
  ./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
  ```
 
@@ -104,6 +114,4 @@ It can take some seconds to build and deploy: `oc get pods -w` lets you see the 
 
  ![](./images/ui-home.png)
 
-
-## Demonstration script
 
