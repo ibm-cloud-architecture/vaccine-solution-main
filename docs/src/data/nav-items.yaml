@@ -42,7 +42,7 @@
       path: /solution/cp4d/mdlc-anatomy/
     - title: Cold Chain Monitoring
       path: /solution/cold-monitoring/
-    - title: Anomaly Detection from Streaming Events
+    - title: Anomaly Detection from Streaming Events using Anomaly Detection Model
       path: /solution/cp4d/async/
     - title: Engineer dispatching for reefer maintenance
       path: /solution/bpm/
