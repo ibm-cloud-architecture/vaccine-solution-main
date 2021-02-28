@@ -4,8 +4,6 @@
       path: /
     - title: Target Audiences
       path: /target-audiences
-    - title: Navigation Journeys
-      path: /journey
 - title: Solution Design
   pages:
     - title: Design Thinking and Event Storming
@@ -52,6 +50,8 @@
       path: /use-cases/order/
     - title: Cold Chain Monitoring
       path: /use-cases/cold-chain/
+    - title: Anomaly detection
+      path: /use-cases/anomaly-detection/
 - title: Devops
   pages:
     - title: GitOps and Tekton

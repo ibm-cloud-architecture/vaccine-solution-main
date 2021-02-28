@@ -3,14 +3,26 @@ title: Order management and optimization demo
 description: Order management and optimization demonstration
 --- 
 
-The vaccine order fullfilment is a complex problem to address as we need to optimize the shipment plan according to the demand and the contraints. A deep dive to the O/R problem is described in [this note](/solution/orderms/voro-solution/). In this scenario we want to demostrate the order entry with an event-driven microservice, and the integration with an event driven linear programming stateful function. The scenario addresses the following features:
+The vaccine order fullfilment is a complex problem to address as we need to optimize the shipment plan according to the demand and the constraints. A deep dive to the Operational Research problem is described in [this note](/solution/orderms/voro-solution/). 
+In this use case / lab you will learn how to integrate with Kafka using the Outbox pattern, and Debezium to capture change to the postgresql table, how to integrate an Operational Research / advanced analytics component in an event-driven architecture which acts on new order events, to improve the shipment plan, how to deploy those component using GitOps approach, and finally how to use Quarkus and microprofile reactive messaging.
+
+## Target Audiences
+
+You will be greatly interested by the subjects addressed in this use case if you are:
+
+* **an architect,** as you will get a deeper understanding on how all the components work together, and how to adopt event-driven approach to this problem which is mostly seen as a batch processing in traditional It architecture.
+* **a developer,** as you will get a broader view of the solution end-to-end, as well as insight into practices to reuse during your future implementations.
+
+## The what 
+
+In this scenario we want to demonstrate the order entry with an event-driven microservice, and the integration with an event driven linear programming stateful function. The scenario addresses the following features:
 
 * Create Order(s) using a simple user interface as an order manager will do after interacting with the country health care request.
 * Validate the [transactional outbox pattern](https://ibm-cloud-architecture.github.io/refarch-eda/patterns/intro/#transactional-outbox) works to get OrderCreated, OrderUpdated or OrderCancelled Events created into a dedicated table in Postgresql
 * Validate how [Debezium Change Data Capture](https://debezium.io/documentation/reference/1.4/connectors/postgresql.html) for Postgresql as a Kafka connector, produces OrderEvents from the table to Kafka `orders` topic.
 * Integrate with the [Shipment plan optimization]() to get the updated shipment plan as events.
 
-## Components involved in this use case
+### Components involved in this use case
 
 * [Vaccine Order Service](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg)
 * Postgres DB
@@ -25,6 +37,8 @@ The vaccine order fullfilment is a complex problem to address as we need to opti
 To have a deeper understanding of the order service read [this overview section](/solution/orderms/#overview). For the Vaccine order reefer optimization service [the design article](/design/voro/) details the optimization approach, while the [solution article](/solution/orderms/voro-solution/#overview) goes over the service implementation details.
 
 ## Deploy to OpenShift 
+
+We propose to use gitops to deploy the Kafka, Postgres and the different services of this solution in few `oc` commands.
 
 ### Pre-requisites
 
@@ -46,182 +60,25 @@ To have a deeper understanding of the order service read [this overview section]
 
 ### Deploy Kafka Strimzi and Postgresql
 
-In the vaccine-gitops see the [readme file](https://github.com/ibm-cloud-architecture/vaccine-gitops) to deploy a 3 brokers cluster, with Kafka user using TLS authentication, and the Kafka topics needed by the solution.
-
-### Deploy the Vaccine Order Service
-
-This microservice is built using maven and Quarkus extensions. In this current main project we have 
-We have already pushed the last version of this service on dockerhub, if you do not want to build it. 
-
-1. Ensure you are working inside the correct project via the following `oc` command:
-
-  ```shell
-  export PROJECT_NAME=vaccine-solution
-  oc project ${PROJECT_NAME}
-  ```
-
-1. Export the value of your Event Streams cluster name into an environment variable:
-
-  ```shell
-  export CLUSTER_NAME=eda-dev
-  export EVENTSTREAMS_NS=eventstreams
-  ```
-   * To check what the name of your Event Streams cluster name is do:
-   ```shell
-   $ oc get eventstreams -n ${EVENTSTREAMS_NS}
-   NAME           STATUS
-   development    Ready
-   ```
-1. Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
-
-  ```shell
-  # Define environement variables
-  SERVICE_ACCOUNT_NAME=postgres-sa
-  DEPLOYMENT_NAME=postgres
-  SERVICE_NAME=postgres
-  DOCKER_IMAGE=docker.io/postgres:11.6-alpine
-  POSTGRES_PASSWORD=adifficultpasswordtoguess
-
-  oc create serviceaccount ${SERVICE_ACCOUNT_NAME}
-  oc adm policy add-scc-to-user anyuid -n ${PROJECT_NAME} -z ${SERVICE_ACCOUNT_NAME}
-  oc create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_IMAGE}
-  oc set serviceaccount deployment/${DEPLOYMENT_NAME} ${SERVICE_ACCOUNT_NAME}
-  oc patch deployment ${DEPLOYMENT_NAME} --type="json" -p='[{"op":"add", "path":"/spec/template/spec/containers/0/args", "value":[]},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"-c"},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"wal_level=logical"} ]'
-  oc set env deployment ${DEPLOYMENT_NAME} POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  oc expose deployment ${DEPLOYMENT_NAME} --port 5432 --name ${SERVICE_NAME}
-  ```
-
-1. Get Kafka TLS user name to access Event Streams bootstrap using the external route. export this user name in KAFKA_USER environment variable:
-
-  ```shell
-  oc get kafkausers -n $EVENTSTREAMS_NS 
-  # NAME                                CLUSTER   AUTHENTICATION   AUTHORIZATION
-  # app-scram                           eda-dev   scram-sha-512    simple
-  # app-tls                             eda-dev   tls              simple
-  export KAFKA_USER=app-tls
-  ```
-1. Copy Kafka TLS user certificate to target project:
-
-  ```shell
-  oc get secret ${KAFKA_USER} -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.namespace="'${PROJECT_NAME}'"' | oc apply -f -
-  ```
-1. Get Kafka bootstrap server URL within
-
-   ```shell
-   export KAFKA_BROKERS=$(oc get route -n ${EVENTSTREAMS_NS} ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443")
-   ```
-
- 1. Copy TLS server CA certificate from eventstreams project to local project with the command:
-
-   ```shell
-   oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' |jq -r '.metadata.namespace="'${PROJECT_NAME}'"' | oc apply -f -
-   ``` 
-
-1. Define environment variables for the order service with config map and secrets:
+If you want to get a deep understanding of how the configuration is done see the different `Kustomization.yaml` files in the `vaccine-gitops` repository, and see the [readme file](https://github.com/ibm-cloud-architecture/vaccine-gitops) to deploy a three broker cluster, with Kafka user using TLS authentication, and the Kafka topics needed by the solution. 
 
 ```shell
-# config map
-oc apply -f  https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-order-mgr-pg/main/src/main/kubernetes/configmap.yaml
-# Secrets
-oc apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: vaccine-order-secrets
-stringData:
-  KAFKA_USER: ${KAFKA_USER}
-  KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_USER}
-  QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-  QUARKUS_DATASOURCE_USERNAME: postgres
+# login to the OpenShift cluster
+oc login ....
+# then deploy the solution
+./scripts/order-mgr-ocp.sh --skip-login
 ```
 
-* Deploy the app. If you have cloned the repository and have java you can use the following command:
+### Deploy on OpenShift with Event Streams as Kafka 
 
- ```shell
- ./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
- ```
+See [this note](/use-cases/eventstreams) for this type of deployment and the following scripts can be done to automate the steps described in the note:
 
- If not, you can deploy the application using the deployment config as we have pushed the ibmcase/vaccineorders image to dockerhub:
-
- ```shell
-oc apply -f  https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-order-mgr-pg/main/src/main/kubernetes/deploymentconfig.yaml
-
- ```
-
-### Deploy Debezium CDC connector
-
-The [Event Streams product documentation](https://ibm.github.io/event-streams/connecting/setting-up-connectors/) goes over the tasks to be done to config Kafka Connect cluster, but we can summarize them for our use case as:
-
-* Start a Kafka connector cluster: We use the custom resource definition called `KafkaConnectS2I`, which one instance represents a Kafka connect cluster. Each connector is represented by another custom resource called `KafkaConnector`. Kafka connect needs a user access to the Brokers. We can use the TLS user as previously done (See also [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/connect-cos/#set-up-the-kafka-connect-cluster) for the same type of setting). 
-  * Event Streams UI has a Toolbox menu with the `Set up a Kafka Connect environment` where we can download the `KafkaConnectS2I` configuration. The matching configuration is [in this file](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/blob/main/environment/cdc/kafka-connect-s2i.yaml) and uses predefined TLS user and cluster certificate. The cluster name is `connect-cluster`.
-  * Update the following values in this file: `bootstrapServers` and `secretName: tls`  to `secretName: <yourTLSuser>` and the Server ca certificate secretName like `kafka-cluster-ca-cert`.
-   ```yaml
-   tls:
-    trustedCertificates:
-      - certificate: ca.crt
-        secretName: kafka-cluster-ca-cert
-   ```
-  * Deploy the cluster with: `oc apply -f kafka-connect-s2i.yaml -n ${EVENTSTREAMS_NS}`
-  * Validate it via: 
-
-   ```shell
-   oc get kafkaconnects2i -n ${EVENTSTREAMS_NS}
-   oc describe kafkaconnects2i connect-cluster -n ${EVENTSTREAMS_NS}
-   ```
-* Download the postgres plugin archive from [debezium maven repository](https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/1.4.0.Final/debezium-connector-postgres-1.4.0.Final-plugin.tar.gz) and then add the jar files to the `my-plugins\debezium-connector` folder. We need a subfolder as this connector includes multiple jars. This step was already done and the debezium connector jars are in the [environment/cdc/my-plugins/debezium-connector)](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg/tree/main/environment/cdc/my-plugins/debezium-connector)
-
-  ```
-  ├── my-plugins
-  │   └── debezium-connector
-  │       ├── CHANGELOG.md
-  │       ├── CONTRIBUTE.md
-  │       ├── COPYRIGHT.txt
-  │       ├── LICENSE-3rd-PARTIES.txt
-  │       ├── LICENSE.txt
-  │       ├── README.md
-  │       ├── README_ZH.md
-  │       ├── debezium-api-1.4.0.Final.jar
-  │       ├── debezium-connector-postgres-1.4.0.Final.jar
-  │       ├── debezium-core-1.4.0.Final.jar
-  │       ├── failureaccess-1.0.1.jar
-  │       ├── guava-30.0-jre.jar
-  │       ├── postgresql-42.2.14.jar
-  │       └── protobuf-java-3.8.0.jar
-  └── pg-connector.yaml
-  ```
-
-* Deploy the connector configuration:
-
-  ```shell
-  # pwd = .../environment/cdc/
-  oc start-build connect-cluster-connect --from-dir ./my-plugins/ --follow -n ${EVENTSTREAMS_NS}
-  #...
-  # Storing signatures
-  # Successfully pushed image-registry.openshift-image-registry.svc:5000/eventstreams/connect-cluster-connect@sha256:9315b6a6c8f904d0fb5a57f67ba4c9067c6c8264814f283151b20b9d6f147092
-  # Push successful
-  ```
-* Modify the `pg-connector.yaml` from the `environment/cdc` folder to configure the Postgres datasource credentials:
-  ```yaml
-  config: 
-    database.dbname: postgres
-    database.hostname: postgres.vaccineorder.svc
-    database.password: pgpwd
-    database.port: 5432
-    database.server.name: vaccine
-    database.user: postgres
-    table.whitelist: public.orderevents
-    plugin.name: pgoutput
-  ```
-* Then start the connector: `oc apply -f pg-connector.yaml -n ${EVENTSTREAMS_NS}`
-* Verify it is running: `oc describe kafkaconnector pg-connector -n ${EVENTSTREAMS_NS}`, you should see one task running. 
-* Looking at the pod trace for the connector you should see a successful connection, something like:
-
+```shell
+# login to the OpenShift cluster
+oc login ....
+# then deploy the solution
+./scripts/order-mgr-es-ocp.sh --skip-login
 ```
-Successfully tested connection for jdbc:postgresql://postgres.vaccineorder.svc:5432/postgres with user 'postgres' 
-```
-* A new topic may have been created with the name of the table replicated: `vaccine.public.orderevents` with new messages mapping the rows in the table.
-
-### Deploy the Optimization Service
 
 ## Scenario script
 
@@ -253,8 +110,8 @@ and fill the following data:
 
 * Verify the data in postgresql: 
 
-Once submitted the data are saved into the postgres DB, with the outbox pattern having created new records in the corresponding Event tables. 
-This can be done using different tools, like `psql` directly in the pod, or `pgadmin4`.
+Once submitted the data are saved into the postgres DB, with the outbox pattern having created new records in the corresponding `OrderEvents` tables. 
+We can verify the tables content using different tools, like `psql` directly in the pod, or using `pgadmin4`.
 
  ```shell
  oc get pods | grep postgres

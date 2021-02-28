@@ -5,11 +5,14 @@ description: Code repository map for easy navigation
 
 ## Order processing
 
-* [Order management microservice with user interface to enter orders](https://github.com/ibm-cloud-architecture/vaccine-order-mgr). This project illustrates the OutBox pattern and Change data capture with Debezium from a DB2 database to Kafka.
+* [Order management microservice with user interface to enter orders](https://github.com/ibm-cloud-architecture/vaccine-order-mgr). This project illustrates the Transactional OutBox pattern combined with Debezium Change data capture from Postgresql database to Kafka.
 * [Order shipment optimizer with Decision Optimization (CPLEX)](https://github.com/ibm-cloud-architecture/vaccine-order-optimizer). This is a python flask application exposing REST API but also consuming events from different topic to maintain internal view of the data needed for the optimization execution. CPLEX runs on Cloud Pak for Data or on IBM Cloud service
+* [Transportation table and simulator](https://github.com/ibm-cloud-architecture/vaccine-transport-simulator) a simple simulator to present the transportation route and cost to be used by the order optimization component.
 
 ## Cold chain monitoring
 
 * [Refrigerator monitoring to assess cold chain and anomaly detection](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent): this is a quarkus app, with microprofile and reactive messaging. It use Kafka Streams with Ktable, interactive query to compute the mumber of temperature violation per container. It optionally calls the anomaly detection model deployed on Watson ML.
  
 * [Simulate Refrigerator telemetries](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator). The simulator component is a Python-based application for generating anomalous data events for refrigerated containers. It is controlled by a REST API for triggering the cold chain demo.
+
+* [Reefer manager](https://github.com/ibm-cloud-architecture/vaccine-reefer-mgr) Not yet implemented

@@ -3,6 +3,8 @@ title: Cold-chain monitoring
 description: Cold-chain monitoring
 ---
 
+- UPDATED 02/28/2021 
+
 The vaccine lots need to be kept at a constant temperature for a period of time. The sensor telemetry data coming from the refrigerated shipping containers is processed to assess cold-chain violations.
 
 The solution for this use case includes streaming telemetry events, a stateful microservice to implement aggregation & alarm generation, and integration with a microservice to log issues against the refrigerated shipping container.
@@ -11,8 +13,7 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 * [Vaccine Refrigerator container Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
 * [Vaccine Reefer Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
-* [IBM Event Streams](https://ibm.github.io/event-streams/)
-* [Anomaly detection scoring service](/analyze/ws-ml-dev/) with WatsonML and anomaly detection built in Cloud Pak for Data
+* [IBM Event Streams](https://ibm.github.io/event-streams/) or Strimzi Kafka
 
 ![Architecture diagram](./images/cc-components.png)
 
@@ -22,7 +23,6 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 * The Reefer simulator is a python Flask app, which supports simple API to control the Refrigerator container simulation. It is described in [this note](/solution/reefer-iot/), also see next section to deploy it on OpenShift.
 * The Monitoring Agent is a Quarkus app, with Kafka Streams, reactive messaging to monitor the cold chain with stateful operations. It also call the Anomaly detection service. Implementation details can be read in [this note](/solution/cold-monitoring/).
-* The model to assess if the refrigerator container has issue. To develop the model we need to [get the telemetry data](/solution/cp4d/) in Cloud Pak for data, and then perform feature engineering and use AutoAI for developing the model as described in [this note](/analyze/ws-ml-dev/). As an alternate to collect the data, it is possible to directly [integrate with Kafka topic](/solution/cp4d/eventStream/) and then save it as csv or in a datalake.
 
 ## Run on OpenShift
 
@@ -35,22 +35,42 @@ The solution for this use case includes streaming telemetry events, a stateful m
    1. Create an EventStreams instance _(via the [Event Streams Custom Resource](https://ibm.github.io/event-streams/installing/installing/#install-an-event-streams-instance))_.
    1. Create a [Kafka User with SCRAM-based credentials](https://ibm.github.io/event-streams/security/managing-access/#managing-access-to-kafka-resources), as required by the [Vaccine Reefer Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator#application-deployment).
    1. Create a [Kafka User with TLS-based credentials](https://ibm.github.io/event-streams/security/managing-access/#managing-access-to-kafka-resources), as required by the [Vaccine Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent#create-a-tls-user).
-   1. Create two [Kafka Topics](https://ibm.github.io/event-streams/getting-started/creating-topics/). One for the container telemetries events and another for the vaccine cold-chain violation alert events. These topics will be refered as `YOUR_TELEMETRIES_TOPIC` and `YOUR_REEFER_TOPIC` respectively throughout this tutorial. For the instructions on this tutorial, we will assume the names for these two topics to be `coldchain-telemetry` and `coldchain-reefers` respectively.
+   1. Create two [Kafka Topics](https://ibm.github.io/event-streams/getting-started/creating-topics/). One for the container telemetries events and another for the vaccine cold-chain violation alert events. These topics will be refered as `YOUR_TELEMETRIES_TOPIC` and `YOUR_REEFER_TOPIC` respectively throughout this tutorial. For the instructions on this tutorial, we will assume the names for these two topics to be `reefers.telemetries` and `vaccine.reefers` respectively.
 
-1. Create a new project that will be used for the deployment of all other components. This will be refered as `YOUR_PROJECT_NAME` throughout the rest of this tutorial. For the instructions on this tutorial, We will assume the name for the project is `coldchain`.
+1. Create a new project that will be used for the deployment of all other components. This will be refered as `YOUR_PROJECT_NAME` throughout the rest of this tutorial. For the instructions on this tutorial, We will assume the name for the project is `vaccine-solution`.
 1. [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
 1. [jq](https://stedolan.github.io/jq/) on your local environment.
-1. IBM Cloud Pak for Data, deployed on OpenShift Cluster
+1. [Kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) for one script deploy
 1. Use a Terminal and the `oc` cli. If you want to access the code source you can clone the two main repositories of this solution:
 
   ```shell
+  git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
   git clone https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator
   git clone https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent
   ```
 
-### Deploy the Vaccine Reefer Simulator
+### TL;DR  - One Click Deploy
 
-To get more detail of this Python Flask application [read this note](/solution/reefer-iot/).
+This is not really one click, but one shell script. Go to the [vaccine-gitops] folder and do the following steps:
+
+* Set your personal deployment parameters within the   `scripts/env.sh` file
+* Use the `oc login --token...  --server ....` command to log to the OpenShift cluster. (From the OpenShift admin console, top right menu)
+* Start `./scripts/deployColdChainWithEentStreams.sh --skip-login`
+* The following pods should be up and running:
+
+ ```shell
+  NAME                                        READY   STATUS    RESTARTS   AGE
+  reefer-monitoring-agent-7dd5f7ccd9-z4cf9    1/1     Running   0          106s
+  vaccine-reefer-simulator-669c5f5d8b-7mms4   1/1     Running   0          105s
+ ```
+
+* Go to the [demonstration section](#scenario_script) to run the demo.
+
+### Deploy the solution manually
+
+#### Deploy the Vaccine Reefer Simulator
+
+To get more details of this Python Flask application [read this note](/solution/reefer-iot/).
 
 1. Export your project name and ensure you are working in it from now on via the following commands:
 
@@ -78,7 +98,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
    ```shell
    $ oc get eventstreams -n ${EVENTSTREAMS_NS}
    NAME           STATUS
-   development    Ready
+   eda-dev    Ready
    ```
 
 1. Create a ConfigMap named `reefer-simul-cm` to hold the configuration for our Vaccine Reefer Simulator component with the following `oc` command:
@@ -157,7 +177,7 @@ To get more detail of this Python Flask application [read this note](/solution/r
 1. Get the route to access the Vaccine Reefer Simulator application with the `oc get routes` command.
 
 
-### Deploy the Vaccine Monitoring Agent
+#### Deploy the Vaccine Monitoring Agent
 
 To get more detail of this Java Quarkus microprofile application [read this note](/solution/cold-monitoring/). The project repository is in this [GitHub repository](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent). Follow the steps below to get the Vaccine Monitoring Agent microservice deployed on your OpenShift cluster:
 
@@ -172,6 +192,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
 
   ```shell
   export TLS_USER=<YOUR_TLS_USER>
+  # we use tls-user
   export YOUR_SUFFIX=<UNIQUE_IDENTIFIER>
   ```
 
@@ -181,7 +202,7 @@ To get more detail of this Java Quarkus microprofile application [read this note
     ```shell
     $ oc get kafkausers -n ${EVENTSTREAMS_NS}
     NAME                  CLUSTER         AUTHENTICATION   AUTHORIZATION
-    vaccine-tls           development     tls              simple
+    tls-user             eda-dev     tls              simple
     ```
     _\*NOTE: We are copying and renaming the credentials in a single command to minimize the need for editing deployment documents._
    - `<UNIQUE_IDENTIFIER>` is a unique identifier of your choice to be used as the suffix for any resource created in OpenShift and IBM Event Streams so that it does not collide with anyone else also completing this tutorial.
@@ -208,8 +229,8 @@ To get more detail of this Java Quarkus microprofile application [read this note
   --from-literal=KAFKA_BOOTSTRAP_SERVERS=${CLUSTER_NAME}-kafka-bootstrap.${EVENTSTREAMS_NS}.svc:9093 \
   --from-literal=QUARKUS_KAFKA_STREAMS_APPLICATION_ID=cold-chain-agent-${YOUR_SUFFIX} \
   --from-literal=KAFKA_SECURITY_PROTOCOL=SSL \
-  --from-literal=TEMPERATURE_THRESHOLD=-50.0 \
-  --from-literal=PREDICTION_ENABLED=<ARE_PREDICTIONS_ENABLED>
+  --from-literal=TEMPERATURE_THRESHOLD=-30.0 \
+  --from-literal=PREDICTION_ENABLED=false
   ```
 
   where
@@ -217,32 +238,6 @@ To get more detail of this Java Quarkus microprofile application [read this note
    - `<YOUR_REEFER_TOPIC>` is the name of the topic that will get the vaccine cold chain temperature violation alert events that you created in the [pre-requisites](#pre-requisites) section.
    - `<YOUR_TELEMETRY_TOPIC>` is the name of the topic that will get the container telemetries events that you created in the [pre-requisites](#pre-requisites) section.
    - `<ARE_PREDICTIONS_ENABLED>` will be **true** or **false** depending on whether you completed the [Developing the Anomaly Detection Model with Watson Studio](/analyze/ws-ml-dev/) section or not. If you are not sure, set it to **false**.
-
-1. If you use the [Anomaly detection service deployed in Watson ML](/analyze/ws-ml-dev/):
-
-   * Get user credential to access to cloud pack for data, with the API key.
-   * Get the ANOMALY_DETECTION_URL.
-   * Get the CP4D_AUTH_URL used to get access token.
-
-1. Define a secret called `agent-secrets` that will hold the credentials and sensitive data for the Vaccine Monitoring Agent to connect to your instance of IBM Event Streams and your Watson ML Anomaly detection model:
-
-   ```shell
-  oc create secret generic agent-secrets \
-  --from-literal=ANOMALY_DETECTION_URL=<YOUR_WATSON_ML_ANOMALY_DETECTION_MODEL_URL> \
-  --from-literal=KAFKA_USER=${TLS_USER} \
-  --from-literal=CP4D_USER=<YOUR_CP4D_USER> \
-  --from-literal=CP4D_APIKEY=<YOUR_CP4D_APIKEY>  \
-  --from-literal=CP4D_AUTH_URL=<YOUR_CP4D_AUTH_URL>
-  ```
-
-  where
-
-   - `<YOUR_WATSON_ML_ANOMALY_DETECTION_MODEL_URL>` is the url to your Watson ML anomaly dectection model.
-   - `<YOUR_CP4D_USER>` is your Cloud Pak for Data username.
-   - `<YOUR_CP4D_APIKEY>` is your Cloud Pak for Data API key.
-   - `<YOUR_CP4D_AUTH_URL>` is your Cloud Pak for Data IAM authentication and authorization API url.
-
-  \***NOTE:** If you have not completed the [Developing the Anomaly Detection Model with Watson Studio](/analyze/ws-ml-dev/) section and as a result you don't have an anomaly detection model deployed to connect to, simply **use random string values** for the variables above.
 
 1. Deploy Vaccine Monitoring Agent microservice by executing the following `oc` command:
 
@@ -280,10 +275,15 @@ Once the solution is up and running, execute the following steps to present an e
 1. Click on the **Try it out** button on the top right corner.
 
 1. In the **Edit Value** text box, update the values of the records accordingly:
-    * **containerID**: `C01`
-    * **nb_of_records**: `500`
-    * **product_id**: `covid-19`
-    * **simulation**: `temperature`
+
+   ```shell
+   {
+      "containerID": "C21",
+      "nb_of_records": 300,
+      "product_id": "covid-19",
+      "simulation": "tempgrowth"
+    }
+   ```
 
     ![flasgger2](./images/flasgger2.png)
 
@@ -341,11 +341,6 @@ Once the solution is up and running, execute the following steps to present an e
 
   where you will see in the reponse body a json object representing the monitoring data for the reefer container you requested it for. You will be able to see if there has been any cold chain temperature violations, how many, the last temperatures, etc...
 
-### Anomaly detection
-
-If you have deployed the anomaly detection model to Watson ML and configured the monitoring agent to call this entity, then the reefer topic will contain new message about potential issue on this refrigerator container. The downstream `reefer manager service` will assess the number of times this refrigerator was flagged as abnormal, and will trigger a business process in BPM. See [this note](/solution/bpm/) for the process application implementation detail.
-
-_NOTE: The process application needs to be updated and the reefer manager service implemented to get the end-to-end scenario covered_
 
 ### Clearing the project
 
