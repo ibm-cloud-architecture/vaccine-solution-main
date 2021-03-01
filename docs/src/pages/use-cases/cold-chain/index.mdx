@@ -51,11 +51,11 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 ### TL;DR  - One Click Deploy
 
-This is not really one click, but one shell script. Go to the [vaccine-gitops] folder and do the following steps:
+Go to `vaccine-gitops` folder and do the following steps:
 
 * Set your personal deployment parameters within the   `scripts/env.sh` file
 * Use the `oc login --token...  --server ....` command to log to the OpenShift cluster. (From the OpenShift admin console, top right menu)
-* Start `./scripts/deployColdChainWithEentStreams.sh --skip-login`
+* Start `./scripts/deployColdChainWithEventStreams.sh --skip-login`
 * The following pods should be up and running:
 
  ```shell
@@ -64,9 +64,11 @@ This is not really one click, but one shell script. Go to the [vaccine-gitops] f
   vaccine-reefer-simulator-669c5f5d8b-7mms4   1/1     Running   0          105s
  ```
 
-* Go to the [demonstration section](#scenario_script) to run the demo.
+* Go to the [demonstration section](#scenario-script) to run the demo.
 
 ### Deploy the solution manually
+
+If you want to do this scenario as a lab, then this section addresses how to build and deploy the components to OpenShift:
 
 #### Deploy the Vaccine Reefer Simulator
 
@@ -105,9 +107,7 @@ To get more details of this Python Flask application [read this note](/solution/
 
   ```shell
   oc create configmap reefer-simul-cm \
-  --from-literal=KAFKA_CERT=/app/certs/ca.crt \
-  --from-literal=KAFKA_MAIN_TOPIC=<YOUR_TELEMETRY_TOPIC> \
-  --from-literal=KAFKA_BROKERS=<YOUR_KAFKA_BOOTSTRAP_EXTERNAL_ADDRESS>
+  --from-literal=KAFKA_MAIN_TOPIC=<YOUR_TELEMETRY_TOPIC> 
   ```
 
   where
@@ -122,8 +122,7 @@ To get more details of this Python Flask application [read this note](/solution/
 
   ```shell
   oc create secret generic reefer-simul-secret \
-  --from-literal=KAFKA_USER=<YOUR_SCRAM_KAFKA_USER_USERNAME> \
-  --from-literal=KAFKA_PASSWORD=<YOUR_SCRAM_KAFKA_USER_PASSWORD>
+  --from-literal=KAFKA_BROKERS=<YOUR_KAFKA_BOOTSTRAP_EXTERNAL_ADDRESS>
   ```
 
   where
@@ -132,9 +131,9 @@ To get more details of this Python Flask application [read this note](/solution/
    ```shell
    $ oc get kafkausers -n ${EVENTSTREAMS_NS}
    NAME                    CLUSTER         AUTHENTICATION   AUTHORIZATION
-   vaccine-scram           development     scram-sha-512    simple
+   scram-user           eda-dev     scram-sha-512    simple
    ```
-   - `<YOUR_SCRAM_KAFKA_USER_PASSWORD>` is the password that IBM Event Streams generated for the KakfkaUser that got created behind the scenes when you generated the SCRAM credentials in the [pre-requisites](#pre-requisites) section. You can retrieve that password with the following `oc` command:
+   - `<YOUR_SCRAM_KAFKA_USER_PASSWORD>` is the password that IBM Event Streams generated for the KafkaUser that got created behind the scenes when you generated the SCRAM credentials in the [pre-requisites](#pre-requisites) section. You can retrieve that password with the following `oc` command:
    ```shell
    oc get secret <YOUR_SCRAM_KAFKA_USER_USERNAME> -n ${EVENTSTREAMS_NS} -o jsonpath='{.data.password}' | base64 -D
    ```
@@ -146,10 +145,19 @@ To get more details of this Python Flask application [read this note](/solution/
   ```
   _\*NOTE: We are copying and renaming the certificate in a single command to minimize the need for editing deployment documents. That is, we are providing the server-side TLS certificate in the secret the Vaccine Reefer Simulator and the Vaccine Monitoring Agent microservices are expecting to find it._
 
+1. Compile, build the docker image and push to the registry
+
+  ```shell
+  # In the vaccine simulator project 
+  docker build -t ibmcase/vaccine-reefer-simulator  .
+  docker push ibmcase/vaccine-reefer-simulator 
+  ```
+
 1. Deploy Vaccine Reefer Simulator microservice components (application plus a service and a route to make it accessible) via the following `oc apply` command:
 
   ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/app-deployment.yaml
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/deployment.yaml
+  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/deployment.yaml
   ```
 
    - You should see the following output:

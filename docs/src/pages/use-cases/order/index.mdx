@@ -58,7 +58,24 @@ We propose to use gitops to deploy the Kafka, Postgres and the different service
  git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
  ```
 
-### Deploy Kafka Strimzi and Postgresql
+### TL;DR  - One Click Deploy
+
+Go to `vaccine-gitops` folder and do the following steps:
+
+* Set your personal deployment parameters within the   `scripts/env.sh` file
+* Use the `oc login --token...  --server ....` command to log to the OpenShift cluster. (From the OpenShift admin console, top right menu)
+* Start `./scripts/deployOrderOptimWithEventStreams.sh --skip-login`
+* The following pods should be up and running:
+
+ ```shell
+  NAME                                        READY   STATUS    RESTARTS   AGE
+  reefer-monitoring-agent-7dd5f7ccd9-z4cf9    1/1     Running   0          106s
+  vaccine-reefer-simulator-669c5f5d8b-7mms4   1/1     Running   0          105s
+ ```
+
+### Deploy the solution manually
+
+#### Deploy Kafka Strimzi and Postgresql
 
 If you want to get a deep understanding of how the configuration is done see the different `Kustomization.yaml` files in the `vaccine-gitops` repository, and see the [readme file](https://github.com/ibm-cloud-architecture/vaccine-gitops) to deploy a three broker cluster, with Kafka user using TLS authentication, and the Kafka topics needed by the solution. 
 
@@ -69,7 +86,7 @@ oc login ....
 ./scripts/order-mgr-ocp.sh --skip-login
 ```
 
-### Deploy on OpenShift with Event Streams as Kafka 
+#### Deploy on OpenShift with Event Streams as Kafka 
 
 See [this note](/use-cases/eventstreams) for this type of deployment and the following scripts can be done to automate the steps described in the note:
 

@@ -10,8 +10,9 @@ Two main use cases are supported by this solution: cold chain monitoring, and op
 
 1. Optimized order management:
 
-  * [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg): Exposes API to manage vaccine order. Based on Quarkus, Hibernate Panache ORM, Postgresql, Debezium outbox, reactive messaging.
-  * [Order Optimizer service](https://github.com/ibm-cloud-architecture/vaccine-order-optimizer) to support event driven service to compute the best shipment plan for shipping vaccine lots to different countries.
+   * [Order manager microservice](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg): Exposes API to manage vaccine order. Based on Quarkus, Hibernate Panache ORM, Postgresql, Debezium outbox, reactive messaging.
+   * [Order Optimizer service](https://github.com/ibm-cloud-architecture/vaccine-order-optimizer) to support event driven service to compute the best shipment plan for shipping vaccine lots to different countries.
+   * [Transportation simulator](https://github.com/ibm-cloud-architecture/vaccine-transport-simulator) to simulate transportation itinerary and cost.
 
 2. Cold Chain monitoring
 
