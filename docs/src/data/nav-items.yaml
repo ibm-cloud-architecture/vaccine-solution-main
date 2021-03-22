@@ -56,14 +56,6 @@
   pages:
     - title: GitOps and Tekton
       path: /devops/
-- title: Multi-cloud management
-  pages:
-    - title: Problem statement
-      path: /mcm/problem/
-    - title: Products deployment
-      path: /mcm/deploy-products/
-    - title: Solution deployment
-      path: /mcm/deploy-solution/
 - title: Additional reading
   pages:
     - path: /additional-reading/

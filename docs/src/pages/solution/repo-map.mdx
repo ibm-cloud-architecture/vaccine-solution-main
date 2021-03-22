@@ -3,6 +3,10 @@ title: Repository map
 description: Code repository map for easy navigation
 ---
 
+## Gitops
+
+* [Gitops repository to manage deployments](https://github.com/ibm-cloud-architecture/vaccine-gitops): Each component has its own kustomize yaml file, and different environment configurations are also defined. See repository readme.
+
 ## Order processing
 
 * [Order management microservice with user interface to enter orders](https://github.com/ibm-cloud-architecture/vaccine-order-mgr). This project illustrates the Transactional OutBox pattern combined with Debezium Change data capture from Postgresql database to Kafka.
@@ -15,4 +19,4 @@ description: Code repository map for easy navigation
  
 * [Simulate Refrigerator telemetries](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator). The simulator component is a Python-based application for generating anomalous data events for refrigerated containers. It is controlled by a REST API for triggering the cold chain demo.
 
-* [Reefer manager](https://github.com/ibm-cloud-architecture/vaccine-reefer-mgr) Not yet implemented
+* [Freezer manager](https://github.com/ibm-cloud-architecture/vaccine-freezer-mgr) to process alerts and broadcast them to server side events. Support also other operations and Resources for managing the Freezer entity.

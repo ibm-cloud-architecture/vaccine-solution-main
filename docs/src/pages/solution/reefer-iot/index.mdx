@@ -5,37 +5,45 @@ description: Simple Refrigerator container internet of thing simulator to contro
 
 
 <PageDescription>
-This Simulator web application is a simple python (3.7) Flask app exposing a REST POST end point to control the type of simulation we want to run and to produce refrigerator container telemetry events to kafka `telemetries` topic.
+This Simulator web application is a simple python (3.7) Flask app, exposing a REST POST end point to control the type of simulation we want to run and to produce refrigerator container telemetry events to kafka `telemetries` topic.
 </PageDescription>
+
+Updated on 3/21/2021, a new user interface was added to present the simulation and connect to the Freezer manager microservice to get server side event. 
 
 <AnchorLinks>
   <AnchorLink>Overview</AnchorLink>
   <AnchorLink>Anatomy</AnchorLink>
   <AnchorLink>Build</AnchorLink>
   <AnchorLink>Run</AnchorLink>
-  <AnchorLink>Usage Details</AnchorLink>
+  <AnchorLink>Demonstrate</AnchorLink>
 </AnchorLinks>
 
 ## Overview
 
+The user interface is intuitive and presents a form to select the container, product, number of record to generate and the type of simulation:
+
+![](./images/simulator.png)
+
+The right side presents the temperature and co2 gauges and the potential Alerts created by the monitoring agent.
 
 ### Application requirements
 
-The simulator is not in the critical path for production like component. It is here to help us develop the other components of the solution as we do not have real life Refrigerator container. Here are the simple user stories for this app:
+The simulator is here to help us develop the other components of the solution as we do not have real life Refrigerator container. The supported features:
 
-1. when I want to generate mockup telemetries data for my data scientist friend, I want to start the simulator tool from command line so I can get a csv file with telemetry data
-1. when I want to generate mockup telemetries data for my data scientist friend, I want to be able to simulate co2 sensor, o2 sensor, temperature and power sensor issue so I can get relevant data for the machine learning model to make sense
-1. when I want to generate mockup telemetries data for my data scientist friend, I want to start the simulator tool from command line using parameter so I can get save data to a remote document oriented database: mongodb on IBM cloud.
-1. when I want to demonstrate the solution, I want to call a REST api to control the generation of faulty sensor data so I can get the scoring service returning maintenance needed.
-1. when I want to demonstrate the cold chain violation, I want to call a REST api to control a change to the temperature over a time period so cold chain violation can be identified with a complex event processing or AI model.
+1. Run the simulator as command line to generate csv file with telemetry data to be shared with Data Scientists.
+1. Support the following simulation: normal behavior, co2 sensor, o2 sensor, temperature and power sensor strange behavior, and continue temperature growth up to ambiant temperature. 
+1. Send telemetries to a Kafka topic
+1. Support a user interface to make the demonstration of the end to end solution
+ 
+The following figure illustrates the components involved with this simulator.
 
  ![1](./images/reefer-simul-1.png)
 
-The simulator needs to integrate with kafka / IBM Event Streams deployed as service on the cloud or deployed on OpenShift cluster using Cloud Pak for Integration.
+The simulator needs to integrate with Kafka deployed as service on the cloud or deployed within an OpenShift cluster. For deployment we are proposing to use Event Streams with Cloud Pak for Integration or [Strimzi](https://strimzi.io) / Redhat AMQ Streams. The [gitops project](https://github.com/ibm-cloud-architecture/vaccine-gitops) includes yaml files to deploy event streams or kafka cluster using Strimzi operators.
 
-### Design approach
+## Anatomy
 
-To support remote control of the simulator while running as webapp, we define a POST operation on the `/control` URL:
+The simulator expose one POST operation on the `/control` URL, as you can see from the Swagger UI (`/openapi`)
 
 ![1](images/simulapp-control-swagger.png)
 
@@ -43,13 +51,13 @@ To support remote control of the simulator while running as webapp, we define a 
 
 ```json
     { 'containerID': 'C02',
-    'simulation': 'temperature',
-    'nb_of_records': 4000,
+    'simulation': 'tempGrowth',
+    'nb_of_records': 100,
     "product_id":  "covid-19"
     }
 ```
 
-We have tried to support a domain driven design approach to structure the code, with domain, infrastructure and app modules. The domain module has a unique class for the simulator which main goal is to generate data tuples or records for the different simulation types. It is reused by the standalone simulation CLI tool to generate data at rest, if needed.
+We have tried to support a domain driven design approach to structure the code, with domain, infrastructure and app modules. The domain module has a unique class for the simulator which main goal is to generate data tuples or records for the different simulation types. It is reused by the standalone simulation CLI tool to generate csv data.
 
 As the simulator is also a webapp we need to package it with [Flask](https://www.fullstackpython.com/flask.html) and run it using one of the Web Server Gateway Interface (WSGI) implementation, like [Gunicorn](http://docs.gunicorn.org/).
 
@@ -59,13 +67,12 @@ Flask is a simple library to implement REST based microservice and web applicati
 
 Flask is mono threaded so it fits well in a simple web application for development purpose, but for production it is recommended to add a web server like [Gunicorn](https://gunicorn.org/) to handle multiple concurrent requests.
 
-## Anatomy
 
-The app is done using Flask, blueprint, flasgger, flask_restful, prometheus, confluent_kafka.
+The app is also using Flask blueprint, flasgger, flask_restful, prometheus, confluent_kafka.
 
-The app.py Flask application imports the different blue prints, server the apidoc and starts the server. Each [Flask blueprints](https://flask.palletsprojects.com/en/1.1.x/blueprints/) is defined in the `api` folder. 
+The app.py Flask application imports the different blue prints, serves the Vuejs app, serves the apidoc and starts the server. Each [Flask blueprints](https://flask.palletsprojects.com/en/1.1.x/blueprints/) is defined in the `api` folder. 
 
-The basic concept of blueprints is that they record operations to execute when each operation is registered on an application. So to add one operation to support a new control, we add a blueprint, and then register it in the main application: `app.py`.
+The basic concept of blueprints is that, they record operations to execute when each operation is registered on an application. So to add one operation to support a `/control` resource, we add a blueprint, and then register it in the main application: `app.py`.
 
 ```python
 from api.controller import control_blueprint
@@ -135,32 +142,38 @@ The [Pipfile](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator
 This microservice is built using the docker:
 
 ```shell
-docker build -t ibmcase/vaccine-reefer-simulator .
-docker push ibmcase/vaccine-reefer-simulator
+docker build -t quay.io/ibmcase/vaccine-reefer-simulator .
+docker push quay.io/ibmcase/vaccine-reefer-simulator
 ```
 
 ## Run
 
-### Run locally with remote Event Streams on OCP
+### Run locally with docker-compose
 
 See the [readme in the repository](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator#run-locally) to execute the python app within a Dockerfile and remote connected to Evenstreams on OpenShift.
 
 ###  Deployment to OpenShift
 
-We have moved the description on how to deploy to OpenShift in the [cold chain scenario](/use-cases/cold-chain/#deploy-the-vaccine-reefer-simulator). 
+We have moved the description on how to deploy this app to OpenShift in the [cold chain scenario](/use-cases/cold-chain/#deploy-the-vaccine-reefer-simulator). 
 
 
 ## Demonstrate
 
-Once deployed, you can access the Swagger-based REST API via the defined route and trigger the simulation controls.
+Once deployed, you can access the user interface and select one existing container, then
 
-1. To determine the route, use the `oc get route reefer-simulator` command and go to the URL specified in the `HOST/PORT` field in your browser.
+Enter the product to be used P01 for covid-19
+The number of records to send ( less than 500, 100 should be fine)
+The simulation type: For cold chain monitoring use case, select the `tempGrowth` simulation. After few second the gauge should display the generated telemetries. When the simulator is integrated with all the cold chain component, it will also display the Alerts created.
+
+As an alternate is to access the OpenAPI docs user interface:
+
+1. To determine the route, use the `oc get route reefer-simulator` command and go to the URL specified in the `HOST/PORT/apidocs` field in your browser.
 2. From there, drill down into the `POST /control` section and click **Try it out!**.
 3. Enter any of the following options for the fields prepopulated in the `control` body: P01 is the covid-19 vaccine.
 
     * Container: `C01, C02, C03, C04`
     * Product: `P01, P02, P03, P04`
-    * Simulation: `poweroff, co2sensor, o2sensor, temperature, normal`
+    * Simulation: `tempGrowth`
     * Number of records: A positive integer
 
 4. Click **Execute**
