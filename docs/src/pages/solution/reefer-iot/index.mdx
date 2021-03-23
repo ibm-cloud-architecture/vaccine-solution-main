@@ -20,6 +20,19 @@ Updated on 3/21/2021, a new user interface was added to present the simulation a
 
 ## Overview
 
+This refrigerator simulator implementation illustrates the following technologies:
+
+* Flask, with blueprint, flasgger.Swagger, prometheus metrics
+* Kafka producer code using Confuent-python library
+* Integration with Health for kubernetes deployment
+* Sensor simulator using numpy, Pandas to generate tuples and simulated data
+* Use of gnunicorn for serving the webapp in production
+* Vuejs application connect to Server Side End point from another service
+* Dynamic end point URL injection to the Vuejs via a REST end point (see `api/freezerURL.py`)
+* Vuejs and gauge implemented with
+* Docker-compose to run locally
+* Use gitops and Kustomize for deployment. This is declared in a separate [gitops repository](https://github.com/ibm-cloud-architecture/vaccine-gitops) under `apps` folder.
+
 The user interface is intuitive and presents a form to select the container, product, number of record to generate and the type of simulation:
 
 ![](./images/simulator.png)

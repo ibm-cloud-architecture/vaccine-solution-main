@@ -18,8 +18,6 @@ The solution for this use case includes streaming telemetry events, a stateful m
 
 ![Architecture diagram](./images/cc-components.png)
 
-*\*The reefer manager is not done yet*
-
 ### Understand the components
 
 * The Reefer simulator is a python Flask app, which supports simple API to control the Refrigerator container simulation. It is described in [this note](/solution/reefer-iot/), also see next section to deploy it on OpenShift.
@@ -33,12 +31,14 @@ The solution for this use case includes streaming telemetry events, a stateful m
 1. You need an existing OpenShift Cluster with administrator access.
 1. We can use Kafka 2.6 open source using the Strimzi operator, or Event Streams Operator as part of Cloud Pak for Integration. 
 1. If you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
-1. If you want to use Strimzi, you can deploy it within your own project.
+1. If you want to use Strimzi, you can deploy it within your own project using our gitops yaml files (see next section)
+1. Be sure to use an OpenShit  cluster user with admin role
 1. Clone the vaccine-gitops repository:
 
-```shell
-git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
-```
+  ```shell
+  git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
+  ```
+
 1. Create a new project to deploy of all components. This will be refered as `YOUR_PROJECT_NAME` throughout the rest of this tutorial. For the instructions on this tutorial, we use the project name: `vaccine-solution`.
 1. [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
 1. [jq](https://stedolan.github.io/jq/) on your local environment.
@@ -54,14 +54,26 @@ Go to `vaccine-gitops` folder and do the following steps:
 
   * KAFKA_NS to the name of the project where you will deploy Strimzi and the solution (`vaccine-solution`)
   * YOUR_PROJECT_NAME to the name of the project (`vaccine-solution`).
+  * As of now the Kafka cluster name needs to stay as `vaccine-cluster`. 
 * Use the `oc login --token...  --server ....` command to log to the OpenShift cluster. (From the OpenShift admin console, top right menu)
-* Be sure to be in your project:
+* Be sure to be in your project, for example:
 
 ```shell
 oc project vaccine-solution
 ```
 
-* Start `./scripts/deployColdChainWithStrimzi.sh --skip-login`
+* If not done deploy Strimzi with the command
+
+  ```shell
+  ./scripts/deployStrimzi.sh --skip-login
+  ```
+  Three kafka pods and three zookeeper pods should be started.
+
+* Start the secret creation and app deployment:
+
+  ```shell
+  ./scripts/deployColdChainWithStrimzi.sh --skip-login
+  ``` 
 * The following pods should be up and running:
 
  ```shell
@@ -80,12 +92,11 @@ oc project vaccine-solution
   vaccine-reefer-simulator-85dfb448c7-w78zh        1/1     Running     0          15h
  ```
 
-If you go to the OpenShift Console, and the Installed Operator within your project, you should have the Strimzi operator console and the elements created:
+If you go to the OpenShift Console, and review the Installed Operator within your project, you should have the Strimzi operator console and the elements created:
 
 ![](./images/strimzi-console.png)
 
-
-* Go to the [demonstration section](#scenario-script) to run the demo.
+* Next step is to run the [demonstration](#scenario-script).
 
 ### Event Streams - One Click Deploy
 
@@ -96,27 +107,24 @@ If you go to the OpenShift Console, and the Installed Operator within your proje
 ./scripts/deployColdChainWithEventStreams.sh --skip-login
 ```
 
-* Verify in the Event Streams console the created topics
+* Verify in the Event Streams console the created topics.
 * Go to the [demonstration section](#scenario-script) to run the demo.
 
 ### Deploy the solution manually
 
-If you want to do this scenario as a lab, then this section addresses how to build and deploy the components to OpenShift:
+If you want to do this scenario step by step as a lab, then this section addresses how to build and deploy the components to OpenShift:
 
 #### Set Event streams resources
 
-1. Define your OpenShift project name (Kubernetes namespace) as environment variable:
+
+1. Define your OpenShift project name (Kubernetes namespace) as environment variable in the `./scripts/env.sh`:
 
   ```shell
-  export PROJECT_NAME=<YOUR_PROJECT_NAME>
-  oc project ${PROJECT_NAME}
-  ```
-
-1. Export the value of your Event Streams cluster name and the namespace it is installed on to environment variables:
-
-  ```shell
-  export CLUSTER_NAME=<YOUR_CLUSTER_NAME>
-  export EVENTSTREAMS_NS=<YOUR_EVENT_STREAMS_NAMESPACE>
+  CLUSTER_NAME=<YOUR_CLUSTER_NAME>
+  KAFKA_NS=<YOUR_EVENT_STREAMS_NAMESPACE>
+  PROJECT_NAME=<YOUR_PROJECT_NAME>
+  # modify the cluster URL for external and schema registry
+  EXTERNAL_KAFKA_BOOTSTRAP_SERVERS
   ```
 
   where
@@ -129,13 +137,19 @@ If you want to do this scenario as a lab, then this section addresses how to bui
    NAME           STATUS
    eda-dev    Ready
    ```
+1. Be sure to be on your target project: 
+
+   ```shell
+   source ./scripts/setenv.sh
+   oc project ${PROJECT_NAME}
+   ```
 1. Create users and topics using the gitops environment:
 
-```shell
-oc apply -k environments/event-streams
-```
+   ```shell
+   oc apply -k environments/event-streams
+   ```
 
-1. Copy the server-side public TLS certificate of your IBM Event Streams instance to your local project so that the Vaccine Reefer Simulator application is able to establish secure connection with your IBM Event Streams instance:
+1. Copy the server-side public TLS certificate of your IBM Event Streams instance to your local project so that each components are able to establish secure connection with your IBM Event Streams instance:
 
   ```shell
   oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | jq --arg project_name "${PROJECT_NAME}" -r '.metadata.namespace=$project_name' | oc apply -f -
@@ -144,22 +158,19 @@ oc apply -k environments/event-streams
 
 #### Deploy the Freezer manager service
 
-Define the `freezer-mgr-secret` secret:
+* Define the `freezer-mgr-secret` secret: In the gitops repository do the following commands:
 
-```shell
+  ```shell
+  # if needed rerun source ./scripts/env.sh to get the environement variables set
   oc create secret generic freezer-mgr-secret \
     --from-literal=KAFKA_BOOTSTRAP_SERVERS=$INTERNAL_KAFKA_BOOTSTRAP_SERVERS \
     --from-literal=REEFER_TOPIC=$YOUR_REEFER_TOPIC \
     --from-literal=ALERTS_TOPIC=$YOUR_ALERT_TOPIC \
     --from-literal=KAFKA_USER=$TLS_USER \
     --from-literal=KAFKA_CA_CERT_NAME:kafka-cluster-ca-cert 
-```
-
-In the gitops repository do the following command:
-
-```shell
-oc apply -k apps/freezer-mgr/
-```
+  # Then deploy the Freezr mgr
+  oc apply -k apps/freezer-mgr/
+  ```
 
 Verify the pods runs: 
 
@@ -193,8 +204,10 @@ To get more details of this Python Flask application [read this note](/solution/
 * Define the  `reefer-simul-secret` secret as:
 
 ```shell
-oc create secret generic reefer-simul-secret \
-  --from-literal=KAFKA_BOOTSTRAP_SERVERS=$EXTERNAL_KAFKA_BOOTSTRAP_SERVERS 
+  oc create secret generic reefer-simul-secret \
+    --from-literal=KAFKA_BOOTSTRAP_SERVERS=$EXTERNAL_KAFKA_BOOTSTRAP_SERVERS \
+    --from-literal=KAFKA_MAIN_TOPIC=$YOUR_TELEMETRIES_TOPIC \
+    --from-literal=FREEZER_MGR_URL=$FREEZER_MGR_URL
 ```
 
   where
@@ -203,20 +216,11 @@ oc create secret generic reefer-simul-secret \
     ```shell
     oc get route -n ${EVENTSTREAMS_NS} ${CLUSTER_NAME}-kafka-bootstrap -o jsonpath="{.status.ingress[0].host}:443"
     ```
-  
-1. Compile, build the docker image and push to the registry
+ 
+1. Deploy Vaccine Reefer Simulator microservice components (application plus a service and a route to make it accessible) via the following command:
 
   ```shell
-  # In the vaccine simulator project
-  docker build -t ibmcase/vaccine-reefer-simulator  .
-  docker push ibmcase/vaccine-reefer-simulator
-  ```
-
-1. Deploy Vaccine Reefer Simulator microservice components (application plus a service and a route to make it accessible) via the following `oc apply` command:
-
-  ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/deployment.yaml
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-reefer-simulator/master/config/deployment.yaml
+  oc apply -k apps/reefer-sinukator
   ```
 
    - You should see the following output:
@@ -246,8 +250,9 @@ oc create secret generic reefer-simul-secret \
 
 #### Deploy the Vaccine Monitoring Agent
 
-To get more detail of this Java Quarkus microprofile application [read this note](/solution/cold-monitoring/). The project repository is in this [GitHub repository](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent). Follow the steps below to get the Vaccine Monitoring Agent microservice deployed on your OpenShift cluster:
+To get more detail of this Java Quarkus microprofile application [read this note](/solution/cold-monitoring/). The project repository is in this [GitHub repository](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent). 
 
+Follow the steps below to get the Vaccine Monitoring Agent microservice deployed on your OpenShift cluster:
 
 1. Ensure you are working inside the correct project via the following `oc` command:
 
@@ -255,12 +260,10 @@ To get more detail of this Java Quarkus microprofile application [read this note
   oc project ${PROJECT_NAME}
   ```
 
-1. Export the value of your TLS-based KafkaUser name and a unique identifier for the reources to be created into your OpenShift cluster as environment variables so that the following steps in this section can make use of these.
+1. Verify in the `./scripts/env.sh` you have a TLS-based KafkaUser name:
 
   ```shell
-  export TLS_USER=<YOUR_TLS_USER>
-  # we use tls-user
-  export YOUR_SUFFIX=<UNIQUE_IDENTIFIER>
+  TLS_USER=<YOUR_TLS_USER>
   ```
 
   where
@@ -272,9 +275,8 @@ To get more detail of this Java Quarkus microprofile application [read this note
     tls-user             eda-dev     tls              simple
     ```
     _\*NOTE: We are copying and renaming the credentials in a single command to minimize the need for editing deployment documents._
-   - `<UNIQUE_IDENTIFIER>` is a unique identifier of your choice to be used as the suffix for any resource created in OpenShift and IBM Event Streams so that it does not collide with anyone else also completing this tutorial.
-
-1. If not done so already in the previous section where we deployed the Vaccine Reefer Simulator microservice, copy the server-side public certificate of the Event Streams instance to your local project:
+  
+1. If not done already in the previous section where we deployed the Vaccine Reefer Simulator microservice, copy the server-side public certificate of the Event Streams instance to your local project:
 
   ```shell
   oc get secret ${CLUSTER_NAME}-cluster-ca-cert -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="kafka-cluster-ca-cert"' | jq --arg project_name "${PROJECT_NAME}" -r '.metadata.namespace=$project_name' | oc apply -f -
@@ -287,29 +289,17 @@ To get more detail of this Java Quarkus microprofile application [read this note
   oc get secret ${TLS_USER} -n ${EVENTSTREAMS_NS} -o json | jq -r '.metadata.name="tls"' | jq --arg project_name "${PROJECT_NAME}" -r '.metadata.namespace=$project_name' | oc apply -f -
   ```
 
-1. Create a ConfigMap named `agent-cm` to hold the configuration for the Vaccine Monitoring Agent microservice with the following `oc` command:
+1. Create a secret named `reefer-monitoring-agent-secret` to hold the configuration for the Vaccine Monitoring Agent microservice with the following `oc` command:
 
   ```shell
-  oc create configmap agent-cm \
-  --from-literal=REEFER_TOPIC=<YOUR_REEFER_TOPIC> \
-  --from-literal=TELEMETRY_TOPIC=<YOUR_TELEMETRY_TOPIC> \
-  --from-literal=KAFKA_BOOTSTRAP_SERVERS=${CLUSTER_NAME}-kafka-bootstrap.${EVENTSTREAMS_NS}.svc:9093 \
-  --from-literal=QUARKUS_KAFKA_STREAMS_APPLICATION_ID=cold-chain-agent-${YOUR_SUFFIX} \
-  --from-literal=KAFKA_SECURITY_PROTOCOL=SSL \
-  --from-literal=TEMPERATURE_THRESHOLD=-30.0 \
-  --from-literal=PREDICTION_ENABLED=false
+  oc create secret generic reefer-monitoring-agent-secret \
+    --from-literal=KAFKA_BOOTSTRAP_SERVERS=$INTERNAL_KAFKA_BOOTSTRAP_SERVERS
   ```
-
-  where
-
-   - `<YOUR_REEFER_TOPIC>` is the name of the topic that will get the vaccine cold chain temperature violation alert events that you created in the [pre-requisites](#pre-requisites) section.
-   - `<YOUR_TELEMETRY_TOPIC>` is the name of the topic that will get the container telemetries events that you created in the [pre-requisites](#pre-requisites) section.
-   - `<ARE_PREDICTIONS_ENABLED>` will be **true** or **false** depending on whether you completed the [Developing the Anomaly Detection Model with Watson Studio](/analyze/ws-ml-dev/) section or not. If you are not sure, set it to **false**.
 
 1. Deploy Vaccine Monitoring Agent microservice by executing the following `oc` command:
 
   ```shell
-  oc apply -f https://raw.githubusercontent.com/ibm-cloud-architecture/vaccine-monitoring-agent/master/src/main/kubernetes/deployment.yml
+  oc apply -k apps/monitoring-agent
   ```
 
   You should see the following output:
@@ -340,18 +330,18 @@ Once the solution is up and running, execute the following steps to present an e
 
   ![flasgger1](./images/simulator.png)
 
-1. In the **Edit Value** text box, update the values of the records accordingly:
+1. In the form, update the values of the records accordingly:
 
    ```shell
    {
       "containerID": "C21",
-      "nb_of_records": 300,
-      "product_id": "covid-19",
+      "nb_of_records": 100,
+      "product_id": "P01",
       "simulation": "tempgrowth"
     }
    ```
 
-After sometime the temperature grows up to the ambiant temperature and an Alerts should come in the table.
+After sometime the temperature curve in the Gauge grows up to the ambiant temperature and an Alert should come in the table.
 
 ### Analyze simulated reefer telemetry data
 
