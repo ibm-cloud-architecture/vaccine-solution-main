@@ -164,7 +164,7 @@ NAME                                      READY   AGE
 statefulset.apps/postgres-db-postgresql   1/1     2m55s
 ```
 
-Also, you can check that along those components above, the Kustomize scripts were also meant to deploy a secret called `postgresql-creds` that, as the name suggests, will hold the credential paramenters for any other component to be able to connect and use this Postgres instance. You can check this secret out by executing:
+Also, you can check that along those components above, the Kustomize scripts were also meant to deploy a secret called `postgresql-creds` that, as the name suggests, will hold the credential parameters for any other component to be able to connect and use this Postgres instance. You can check this secret out by executing:
 
 ```shell
 oc describe secret postgresql-creds
@@ -501,7 +501,7 @@ In order to create that `postgres-connector` secret that holds the Debezium CDC 
 oc create secret generic postgres-connector --from-file=./connector.properties
 ```
 
-One last thing to do before deploying our Kafka Connect cluster is the need to copy the secret that holds your IBM Entitlement Key over from the OpenShift project where you have IBM Event Streams deployed into. This IBM Entitlement Key is needed to download any IBM product Docker image from IBM's private Docker registry in Quay. This is something you must have present in all your OpenShift projects where you want to IBM software to be deployed into. In order to copy that IBM Entitlement Key secret from the OpenShift project where you have your IBM Event Streams instance deployed into, execute the following command:
+One last thing to do before deploying our Kafka Connect cluster is the need to copy the secret that holds your IBM Entitlement Key over from the OpenShift project where you have IBM Event Streams deployed into. This IBM Entitlement Key is needed to download any IBM product Docker image from IBM's private Docker registry in Quay. This is something you must have present in all your OpenShift projects where you want IBM software to be deployed into. In order to copy that IBM Entitlement Key secret from the OpenShift project where you have your IBM Event Streams instance deployed into, execute the following command:
 
 ```shell
 oc get secret ibm-entitlement-key -n <EVENTSTREAMS_NS> -o json | jq --arg project_name "<PROJECT_NAME>" -r '.metadata.namespace=$project_name' | oc apply -f -
