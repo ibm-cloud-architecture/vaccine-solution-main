@@ -3,23 +3,22 @@ title: Anomaly detection
 description: Refrigerator container anomaly detection
 --- 
 
-
-UNDER CONSTRUCTION
-
+Update 4/11/21
 
 
 ## Components involved in this use case
 
-* [Vaccine Refrigerator container Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
-* [Vaccine Reefer Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent)
-* [IBM Event Streams](https://ibm.github.io/event-streams/)
-* [Anomaly detection scoring service](/analyze/ws-ml-dev/) with WatsonML and anomaly detection built in Cloud Pak for Data
-
 ![Architecture diagram](./images/cc-components.png)
 
-*\*The reefer manager is not done yet*
+
+* The [Vaccine Refrigerator container Simulator](https://github.com/ibm-cloud-architecture/vaccine-reefer-simulator)
+ is a python Flask app, which supports simple API to control the Refrigerator container simulation. It is described in [this note](/solution/reefer-iot/), also see next section to deploy it on OpenShift.
+* The [Monitoring Agent](https://github.com/ibm-cloud-architecture/vaccine-monitoring-agent) is a Quarkus app, using Kafka Streams, and microprofile reactive messaging to monitor the telemetries and assess any cold chain violation via stateful logic. For each uniquely identified refrigerator, it keeps the last measured temperatures and compute some min, max, average and the total number of concutives violated records: temperature above a Threshold. It may potentially call an Anomaly detection scoring service deployed on Watson ML service. We describe this scenario in another use case. To read more on the monitoring agent, see [the implementation  note](/solution/cold-monitoring/).
+* The [Freezer manager service](https://github.com/ibm-cloud-architecture/vaccine-freezer-mgr)) is a simple quarkus app with Reactive messaging to process the alerts and support the Freezer inventory.
+* [Anomaly detection scoring service](/analyze/ws-ml-dev/) with WatsonML and anomaly detection built in Cloud Pak for Data
 
 * The model to assess if the refrigerator container has issue. To develop the model we need to [get the telemetry data](/solution/cp4d/) in Cloud Pak for data, and then perform feature engineering and use AutoAI for developing the model as described in [this note](/analyze/ws-ml-dev/). As an alternate to collect the data, it is possible to directly [integrate with Kafka topic](/solution/cp4d/eventStream/) and then save it as csv or in a datalake.
+
 
 
 ## Run on OpenShift
