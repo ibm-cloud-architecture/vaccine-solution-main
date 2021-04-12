@@ -32,8 +32,10 @@
       path: /solution/cp4d/
     - title: Data Collection from Event Stream in Cloud Pak For Integration
       path: /solution/cp4d/eventStream/
-    - title: Developing the Anomaly Detection Model with Watson Studio
+    - title: Developing the Anomaly Detection Model with AutoAI in Watson Studio
       path: /analyze/ws-ml-dev/
+    - title: Developing the Anomaly Detection Model with Python and Custom Notebook in Watson Studio
+      path: /analyze/ws-ml-py-dev/
     - title: Model Lifecycle Governance
       path: /solution/cp4d/mdlc/
     - title: Governed Model Development Lifecycle for Cold Chain Anomaly prediction
