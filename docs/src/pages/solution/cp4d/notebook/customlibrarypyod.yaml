@@ -1,0 +1,7 @@
+name: pyod_env
+channels:
+  - empty
+  - nodefaults
+dependencies:
+- pip:
+  - pyod
