@@ -219,7 +219,7 @@ This preparation will consist of creating configmaps and secrets that will hold 
 
   In order to generate a set of TLS credentials to authenticate against the internal _tls_ Kafka listener (which will create a Kafka User resource behind the scenes)
 
-    1. Go to your IBM Event Streams user intergace dashboard. You can find where it is by executing:
+    1. Go to your IBM Event Streams user interface dashboard. You can find where it is by executing:
     ```shell
     oc get routes -n <EVENTSTREAMS_NS> | grep ui
     ```
@@ -228,7 +228,7 @@ This preparation will consist of creating configmaps and secrets that will hold 
     1. A panel will slide from the right hand side of your screen. Under the `Kafka listener and credentials` section, click on the `Internal` tab and then on the `Generate TLS credentials` button.
     ![order2](./images/order2.png)
     By the way, you can already see to the left of the `Generate TLS credentials` the Kafka bootstrap address for the internal listener we will be referencing to later on.
-    1. A multiple step wizard to generate credentials for your application will pop up. For the `Credential name` you can choose any name you want. For the rest of the otpions, try to provide the most premissive in each step for easeness.
+    1. A multiple step wizard to generate credentials for your application will pop up. For the `Credential name` you can choose any name you want. For the rest of the options, try to provide the most permissive in each step for easeness.
     1. Once you have finished, you will be presented with the option to download the TLS certificates for your newly created Kafka User credentials as well as with a link to the instructions for retrieving these later. 
     ![order3](./images/order3.png)
     These instructions will consist of finding out that a new secret with the same name you gave to your TLS credentials (and Kafka User as a result) has been created in the OpenShift project your IBM Event Streams instance is installed in. You can double check it by running:
