@@ -125,7 +125,7 @@ This preparation will consist of creating configmaps and secrets that will hold 
   We are going to create a new OpenShift project in which we will deploy everything we need to get this order management and optimization use case working (except IBM Event Streams which we assume that has already been deployed in some other OpenShift project within this OpenShift cluster). Our new OpenShift project will be called `vaccine-omo` (that stands for vaccine order management and optimization) but you can choose any of your likes. To create the project, execute in your terminal (after having logged onto your OpenShift cluster):
 
   ```shell
-  oc new-poject vaccine-omo
+  oc new-project vaccine-omo
   ```
 
   Also, we are going to create a new service account within our OpenShift project that provides an identity for processes that run in a Pod. The reason for this is that the postgres deployment in the following section requires certain privileges that aren't granted with the default service account when a new OpenShift project is created and which will be used when you deploy anything into it unless you specify otherwise.
