@@ -367,7 +367,7 @@ This preparation will consist of creating configmaps and secrets that will hold 
     oc get routes -n <EVENTSTREAMS_NS> | grep ac-reg-external
     ```
 
-  Once you have set those two parameters, you can create the secret by executing:
+  Once you have set those three parameters, you can create the secret by executing:
 
   ```shell
   oc apply -f kafka-schema-registry-secret.yaml
