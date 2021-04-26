@@ -445,7 +445,7 @@ oc apply -f rolebinding.yaml
 that will create the `vaccineorderms-view` role binding that will provide view ClusterRole role to the `vaccine-runtime` service account we created before that is responsible for providing an identity to the processes running in the pods we deploy. 
 
 ```shell
-oc apply -f deployconfig.yaml
+oc apply -f deployment.yaml
 ```
 
 that will, finally, deploy the Vaccine Order Manager for Postgres component (which is actually a pod). You can check out the status of the `vaccineorderms-1-xxxxx` is `Running` after a min or so by executing:
