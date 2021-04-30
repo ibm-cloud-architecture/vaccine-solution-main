@@ -47,7 +47,11 @@ We propose to use gitops to deploy the Kafka, Postgres and the different service
     * Java 11
     * git client 
     * Get access to an OpenShift cluster with Cloud Pak for integration and event streams installed.
-
+1. You need an existing OpenShift Cluster with administrator access.
+1. We can use Kafka 2.7 open source using the Strimzi operator, Event Streams Operator as part of Cloud Pak for Integration or Confluent add-on. 
+1. If you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
+1. If you want to use Strimzi, you can deploy it within your own project using our gitops yaml files (see next section)
+1. If you use Confluent or Event Streams or RedHat AMQ Streams you need to have those Kafka Cluster running.
 1. [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
 1. [jq](https://stedolan.github.io/jq/) on your local environment.
 1. Use a Terminal and the oc cli. If you want to access the code source you can clone the two main repositories of this solution:

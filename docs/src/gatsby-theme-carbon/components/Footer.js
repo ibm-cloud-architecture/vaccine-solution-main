@@ -18,6 +18,7 @@ const links = {
     { href: 'https://www.linkedin.com/in/arnab-de-adhikari-bb632514/', linkText: 'Arnab De Adhikari' },
     { href: 'https://www.linkedin.com/in/souravmazumder/', linkText: 'Sourav Mazumder' },
     { href: 'https://www.linkedin.com/in/staceyronaghan/', linkText: 'Stacey Ronaghan' },
+    { href: 'https://www.linkedin.com/in/rogermiret/?locale=fr_FR', linkText: 'Roger Miret Gine' }
   ],
 };
 

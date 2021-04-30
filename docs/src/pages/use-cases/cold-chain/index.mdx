@@ -29,10 +29,10 @@ The solution for this use case includes streaming telemetry events, a stateful m
 ### Pre-requisites
 
 1. You need an existing OpenShift Cluster with administrator access.
-1. We can use Kafka 2.6 open source using the Strimzi operator, or Event Streams Operator as part of Cloud Pak for Integration. 
+1. We can use Kafka 2.7 open source using the Strimzi operator, Event Streams Operator as part of Cloud Pak for Integration or Confluent add-on. 
 1. If you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
 1. If you want to use Strimzi, you can deploy it within your own project using our gitops yaml files (see next section)
-1. Be sure to use an OpenShift  cluster user with admin role
+1. If you use Confluent or Event Streams or RedHat AMQ Streams you need to have those Kafka Cluster running.
 1. Clone the vaccine-gitops repository:
 
   ```shell
