@@ -20,14 +20,15 @@ In this scenario we want to demonstrate the order entry with an event-driven mic
 * Create Order(s) using a simple user interface as an order manager will do after interacting with the country health care request.
 * Validate the [transactional outbox pattern](https://ibm-cloud-architecture.github.io/refarch-eda/patterns/intro/#transactional-outbox) works to get OrderCreated, OrderUpdated or OrderCancelled Events created into a dedicated table in Postgresql
 * Validate how [Debezium Change Data Capture](https://debezium.io/documentation/reference/1.4/connectors/postgresql.html) for Postgresql as a Kafka connector, produces OrderEvents from the table to Kafka `orders` topic.
-* Integrate with the [Shipment plan optimization]() to get the updated shipment plan as events.
+* Integrate with the [Shipment plan optimization](/design/voro/) to get the updated shipment plan as events.
 
 ## Components involved in this use case
 
-* [Vaccine Order Service](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg)
-* Postgres DB
-* Debezium for change data capture on the outbox table
-* Kafka using Strimzi or [event streams](https://ibm.github.io/event-streams/)
+* Kafka Cluster using either [Strimzi](https://strimzi.io/) or [IBM Event Streams](https://ibm.github.io/event-streams/)
+* [Kafka Connect](https://kafka.apache.org/documentation/#connect)
+* [PostgreSQL Database](https://www.postgresql.org/)
+* [Debezium CDC connector for PostgreSQL DB](https://debezium.io/documentation/reference/connectors/postgresql.html)
+* [Vaccine Order Manager Service](https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg)
 * [Vaccine Order Reefer Optimization Service](https://github.com/ibm-cloud-architecture/vaccine-order-optimizer)
 
  ![](../../solution/orderms/images/vaccine-order-1.png)
@@ -38,46 +39,86 @@ To have a deeper understanding of the order service read [this overview section]
 
 ## Deploy to OpenShift 
 
-We propose to use gitops to deploy the Kafka, Postgres and the different services of this solution in few `oc` commands.
+As already said, we need an OpenShift cluster to deploy this Vaccine Order Management and Optimization use case to. We are providing two approaches to deploy the use case:
+
+1. [One Click Deploy](#one-click-deploy) - where we have automated the deployment of all the pieces making up this use case. We are using the open source Strimzi operator to get a Kafka cluster deployed and the open source Apicurio Registry to get a schema registry deployed.
+1. [Manual Deploy](#deploy-the-solution-manually) - where we will drive you through all of the steps required to get all of the different pieces making up this use case deployed. This approach relies on the availability of an IBM Event Streams instance beforehand.
 
 ### Pre-requisites
 
-* You need:
-    * docker and docker compose on your laptop to run locally or build image
-    * Java 11
-    * git client 
-    * Get access to an OpenShift cluster with Cloud Pak for integration and event streams installed.
-1. You need an existing OpenShift Cluster with administrator access.
-1. We can use Kafka 2.7 open source using the Strimzi operator, Event Streams Operator as part of Cloud Pak for Integration or Confluent add-on. 
-1. If you are sharing the IBM Event Streams instance with other people for this tutorial, you may want to add a unique suffix to the name of the resources to be created next, such as topics, projects, etc. If so, make sure you provide the appropriate name for these throught the rest of the tutorial.
-1. If you want to use Strimzi, you can deploy it within your own project using our gitops yaml files (see next section)
-1. If you use Confluent or Event Streams or RedHat AMQ Streams you need to have those Kafka Cluster running.
-1. [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
-1. [jq](https://stedolan.github.io/jq/) on your local environment.
-1. Use a Terminal and the oc cli. If you want to access the code source you can clone the two main repositories of this solution:
+1. You need access to an OpenShift Cluster **with administrator access**. You can use your own OpenShift cluster or use the [IBM OpenLabs](https://developer.ibm.com/openlabs/openshift) to gain access to a 4h free OpenShift Cluster (if you do so, please use `lab 6`).
+1. You would need the following tools installed on your latpop:
+    * Git client
+    * [OpenShift CLI](https://cloud.ibm.com/docs/openshift?topic=openshift-openshift-cli) on your local environment.
+    * [jq](https://stedolan.github.io/jq/) on your local environment.
 
- ```shell
- git clone https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg
- git clone https://github.com/ibm-cloud-architecture/vaccine-order-optimizer
- git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
- ```
+## One Click Deploy
 
-### TL;DR  - One Click Deploy
+This section will explain how to get the Vaccine Order Management and Optimization use case deployed following a one-click deployment approach.
 
-Go to `vaccine-gitops` folder and do the following steps:
+1. Pull down the Vaccine GitOps GitHub repository:
 
-* Set your personal deployment parameters within the   `scripts/env.sh` file
-* Use the `oc login --token...  --server ....` command to log to the OpenShift cluster. (From the OpenShift admin console, top right menu)
-* Start `./scripts/deployOrderOptimWithEventStreams.sh --skip-login`
-* The following pods should be up and running:
+  ```shell
+  git clone https://github.com/ibm-cloud-architecture/vaccine-gitops
+  ```
 
- ```shell
-  NAME                                        READY   STATUS    RESTARTS   AGE
-  postgres-db-postgresql-0              1/1     Running   0          106s
-  vaccineorderms-5-hb66n                1/1     Running     0          105s
-  vaccine-transport-simulator-2-bk69q   1/1     Running  
-  vaccine-order-optimizer-2-frge3       1/1     Running  
- ```
+1. Change directory to `vaccine-gitops/scripts`
+
+  ```shell
+  cd vaccine-gitops/scripts
+  ```
+
+1. Open the `env-strimzi.sh` and make sure to provide values for:
+
+   * `OCP_ADMIN_USER` and `OCP_ADMIN_PASSWORD` which correspond to your OpenShift cluster credentials. **IMPORTANT:** We recommend you to log into your OpenShift cluster from the same terminal you are going to later execute the one-click-deployment script so that you dont need to share your OpenShift cluster credentials.
+   * `KAFKA_CLUSTER_NAME` which is the name you want to give to the Kafka cluster that will get deployed. It defaults to `vaccine-kafka` and we highly recommend you to leave the default. Otherwise, you would need to modify some yaml deployment scripts...
+   * `APICURIO_REGISTRY_NAME` which is the name you want to give to the Apicurio Registry that will get deployed. It defaults to `vaccine-apicurioregistry` and we highly recommend you to leave the default. Otherwise, you would need to modify some yaml deployment scripts...
+   * `YOUR_PROJECT_NAME` which is the name of the OpenShift project the one-click-deployment script will create for you to get all the components of this Vaccine Order Management and Optimization use case deployed into. It defaults to `vaccine-solution`.
+
+1. Log into your OpenShift cluster from your terminal (again, we recommend to do this instead of sharing your OpenShift cluster credentials in any script)
+1. Execute the `deployOrderOptimWithStrimzi.sh` one-click-deployment script
+
+  ```shell
+  ./deployOrderOptimWithStrimzi.sh [--skip-login]
+  ```
+  where you would add the `--skip-login` flag if you previously logged into your OpenShift cluster.
+
+1. After some time (can easily take up to more than 15 min) you should see the following message:
+
+  ```
+  ********************
+  ** CONGRATULATIONS!! You have successfully deployed the Vaccine Order Managemente and Optimization use case.
+  ********************
+
+  You can now jump to the demo section for this use case at https://ibm-cloud-architecture.github.io/vaccine-solution-main/use-cases/order/#demo
+  ```
+  (\*)We suggest to open another terminal and execute `watch -n 5 oc get pods` to follow the deployment status of the Vaccine Order Management and Optimization components.
+
+1. If you don't see that success message, please checkout the logs to see where it failed.
+1. If you execute `oc get pods` you should see the following pods running on your system:
+
+  ```shell
+  NAME                                                 READY   STATUS      RESTARTS   AGE
+  apicurio-registry-operator-698958454b-frhlk          1/1     Running     0          7m26s
+  postgres-db-postgresql-0                             1/1     Running     0          2m55s
+  vaccine-apicurioregistry-deployment-m9lnl-1-deploy   0/1     Completed   0          6m
+  vaccine-apicurioregistry-deployment-m9lnl-1-kbbvf    1/1     Running     0          5m58s
+  vaccine-connect-cluster-connect-7b5b4b85d8-bzmwt     1/1     Running     0          93s
+  vaccine-kafka-cruise-control-77c8568f48-jp4gt        2/2     Running     0          9m10s
+  vaccine-kafka-entity-operator-dc999bff6-k4tbt        3/3     Running     0          9m36s
+  vaccine-kafka-kafka-0                                1/1     Running     0          10m
+  vaccine-kafka-kafka-1                                1/1     Running     0          10m
+  vaccine-kafka-kafka-2                                1/1     Running     0          10m
+  vaccine-kafka-zookeeper-0                            1/1     Running     0          10m
+  vaccine-kafka-zookeeper-1                            1/1     Running     0          10m
+  vaccine-kafka-zookeeper-2                            1/1     Running     0          10m
+  vaccine-order-optimizer-7d5c8d8445-q8gv5             1/1     Running     0          18s
+  vaccineorderms-87b5bffb9-6nr9m                       1/1     Running     0          2m35s
+  ```
+
+1. Jump to the [Demo](#demo) section to see how the application works and what's behind the scenes.
+
+To clean up your OpenShift cluster and remove all the components the one-click-deployment script created, you just need to execute the `deleteOrderOptimWithStrimzi.sh` script (make sure you have previously logged into your OpenShift cluster)
 
 ## Deploy the solution manually
 
