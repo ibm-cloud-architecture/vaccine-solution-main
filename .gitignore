@@ -6,3 +6,4 @@ docs-archive/
 docs/public/
 docs/node_modules/
 docs/.cache/.idea
+.DS_Store
